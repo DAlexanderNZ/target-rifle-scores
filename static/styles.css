@@ -1,0 +1,32 @@
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid #8887877b;
+}
+
+th {
+    background-color: f2f2f2;
+}
+
+.shot {
+    padding: 4px;
+    border: 2px solid darkgray;
+}
+
+.sighter {
+    padding: 4px;
+    border: 2px solid blue;
+}   
+
+.converted {
+    text-decoration: line-through;
+}
+
+.score-posible {
+    color: red;
+}

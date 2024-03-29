@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Malvern Rifle Club Scores</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"">
+</head>
+<body>
+    <h1>Malvern Rifle Club Scores</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Shots</th>
+            <th>Score</th>
+        </tr>
+        {% for results in results %}
+        <tr>
+            <td>{{ results.name }}</td>
+            <td>
+                {% for (score, shot_type) in zip(results.shots, results.shot_type)  %}
+                {% if shot_type == 1 or loop.index <= results.match_sighters %}
+                    {% if shot_type ==  0 %}
+                    <span class="sighter"><span class="converted">{{ score }}</span></span>
+                    {% else %}
+                    <span class="sighter">{{ score }}</span>
+                {% endif %}
+                {% else %} 
+                <span class="shot">{{ score }}</span> 
+                {% endif %}
+                {% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+            <td>
+                {% if results.score >= (results.match_counters * 5) %}
+                <span class="score-posible">{{ results.score }}</span>
+                {% else %}
+                {{ results.score }}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
