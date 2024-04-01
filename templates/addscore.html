@@ -20,11 +20,12 @@
                 <th>Range</th>
                 <th>Date</th>
             </tr>
-            <!--- Table rows are created dynamically using JavaScript below --> 
+            <!--- Table rows are created dynamically using JavaScript below --->
         </table>
         <input type="submit" value="Submit">
     </form>
     <script>
+        //Define and render rows and contents for the table
         const score_input_table = document.getElementById('score_input')
         let row_id = 0
         function add_row(){
@@ -44,24 +45,38 @@
             score_input_table.appendChild(new_row)
             render_shots(row_id)
             if (row_id > 1) {
+                //Change previous ➕ to ➖
                 let last_row = document.getElementById('row_add_button_' + (row_id - 1))
                 last_row.innerHTML = "➖"
                 last_row.setAttribute('onclick', 'remove_row('+ (row_id - 1) + ')')
-
+                //Add ➖ to new last row.  
                 current_row_buttons = document.getElementById('button_' + row_id)
                 remove_button = document.createElement('span')
                 remove_button.id = 'remove_row_button_' + row_id
                 remove_button.innerHTML = '<button type="button" onclick="remove_row(' + row_id +')">➖</button>'
                 current_row_buttons.appendChild(remove_button)
                 }
-            
+                //Remove added ➖ from second to last row
+                document.getElementById('remove_row_button_' + (row_id - 1)).remove()
             }
         
+        //Allow for selected row to be removed. TODO: Check if user has input in the row and confirm choice.
         function remove_row(removal_row_id){
-            console.log("Remove row " +  removal_row_id + ' new_row_' + removal_row_id)
-            document.getElementById('new_row_' + removal_row_id).remove()
+            if (score_input_table.rows.length > 2) {
+                console.log("Remove row " +  removal_row_id + ' new_row_' + removal_row_id)
+                document.getElementById('new_row_' + removal_row_id).remove()
+                //TODO: Fix this logic to check all rows in table and ➕ to last row if none found
+                if (removal_row_id == row_id){
+                    let last_row = document.getElementById('row_add_button_' + (row_id - 1))
+                    last_row.innerHTML = "➕"
+                    last_row.setAttribute('onclick', 'add_row()')
+                }
+            } else {
+               alert('You cannot delete the last row of the table')
+            }
         }
 
+        //Define the options for shot values. TODO: Switch case for 6 & V enabling when changing shooter class type between TR and F-Class
         let shots_input = document.getElementById('shots_input_')
         function add_shot(new_row_id){
             shots_input = document.getElementById('shots_input_' + new_row_id)
@@ -78,14 +93,17 @@
                 <option value="0">0</option>'
             select_shot.innerHTML = html
             shots_input.appendChild(select_shot)
-            }
+        }
         
+        //Render the number of shots required to score the match
         function render_shots(new_row_id = 1){
             let number_of_shots = '{{ shots }}'
             for (let i = 0; i < number_of_shots; i++) {
                 add_shot(new_row_id)
             }
         }
+
+        //Load first row on page load
         document.addEventListener('DOMContentLoaded', function(){
             add_row()
         })    
