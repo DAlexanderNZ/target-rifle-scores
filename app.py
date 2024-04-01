@@ -56,7 +56,7 @@ def add_score():
         #Store data
         print(f'{name} {match_sighters} {match_counters} {shots} {score} {distance} {date}')
 
-    return render_template('addscore.html')
+    return render_template('addscore.html', shots=10 + 2)
 
 if __name__ == '__main__':
     app.run(debug=True)

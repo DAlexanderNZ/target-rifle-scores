@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Malvern Rifle Club Scores - Add Scores</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <h1>Submit Scores</h1>
     <form method="POST" action="{{ url_for('add_score') }}">
-        <table>
+        <table id="score_input">
             <tr>
+                <th></th>
                 <th>Name</th>
                 <th>Sighters</th>
                 <th>Counters</th>
@@ -17,33 +20,72 @@
                 <th>Range</th>
                 <th>Date</th>
             </tr>
-            <tr id="row">
-                <td><input type="text" name="name" required></td>
-                <td><input type="number" name="match_sighters" required></td>
-                <td><input type="number" name="match_counters" required></td>
-                <td><input type="number" name="shots" required></td>
-                <td><input type="float" step="0.01" name="score" required></td>
-                <td><input type="text" name="distance" required></td>
-                <td><input type="date" name="date" required></td>
-            </tr>
-            </tr>
+            <!--- Table rows are created dynamically using JavaScript below -->
         </table>
         <input type="submit" value="Submit">
     </form>
     <script>
+        const score_input = document.getElementById('score_input')
+        let row_id = 0
+        function add_row(){
+            console.log("create_row")
+            let new_row = document.createElement('tr')
+            row_id++
+            let html = '<tr id="new_row">\
+                <td><button type="button" onclick="add_row()">➕</button></td>\
+                <td><input type="text" name="name" required></td>\
+                <td><input type="number" name="match_sighters" required></td>\
+                <td><input type="number" name="match_counters" required></td>\
+                <td id="shots_input_' + row_id + '"></td>\
+                <td><input type="float" step="0.01" name="score" required></td>\
+                <td><input type="text" name="distance" required></td>\
+                <td><input type="date" name="date" required></td>'
+            new_row.innerHTML = html
+            score_input.appendChild(new_row)
+            render_shots(row_id)
+            }
+
+        let shots_input = document.getElementById('shots_input_')
+        function add_shot(new_row_id){
+            shots_input = document.getElementById('shots_input_' + new_row_id)
+            console.log("create_shot row " + new_row_id)
+            let select_shot = document.createElement('select')
+            let html = '<option value="X">X</option>\
+                <option value="V" id="V">V</option\
+                <option value="6" id="6" disabled>6</option>\
+                <option value="5" selected>5</option>\
+                <option value="4">4</option>\
+                <option value="3">3</option>\
+                <option value="2">2</option>\
+                <option value="1">1</option>\
+                <option value="0">0</option>'
+            select_shot.innerHTML = html
+            shots_input.appendChild(select_shot)
+            }
+        
+        function render_shots(new_row_id = 1){
+            let number_of_shots = '{{ shots }}'
+            for (let i = 0; i < number_of_shots; i++) {
+                add_shot(new_row_id)
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            add_row()
+        })
+            
         document.getElementById('match_sighters').addEventListener('change', function() {
             var match_sighters = parseInt(document.getElementById('match_sighters').value);
             var match_counters = parseInt(document.getElementById('match_counters').value);
             var shots = match_sighters + match_counters;
             document.getElementById('shots').value = shots;
-          });
+        });
           
-          document.getElementById('match_counters').addEventListener('change', function() {
+        document.getElementById('match_counters').addEventListener('change', function() {
             var match_sighters = parseInt(document.getElementById('match_sighters').value);
             var match_counters = parseInt(document.getElementById('match_counters').value);
             var shots = match_sighters + match_counters;
             document.getElementById('shots').value = shots;
-          });      
+        });      
     </script>
 </body>
 </html>
