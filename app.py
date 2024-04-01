@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import itertools
 
 app = Flask(__name__)
@@ -35,8 +35,28 @@ for score in scores:
 
 @app.route('/')
 def index():
-    
     return render_template('index.html', results=scores, zip=zip)
+
+@app.route('/addscore', methods=['GET', 'POST'])
+def add_score():
+    if request.method == 'POST':
+        #Handle form submission
+        name = request.form['name'].title()
+        match_sighters = request.form['match_sighters']
+        match_counters = request.form['match_counters']
+        shots = request.form['shots']
+        #shot_type = request.form['shot_type']
+        score = request.form['score']
+        distance = request.form['distance']
+        date = request.form['date']
+
+        #Validate form data
+
+
+        #Store data
+        print(f'{name} {match_sighters} {match_counters} {shots} {score} {distance} {date}')
+
+    return render_template('addscore.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

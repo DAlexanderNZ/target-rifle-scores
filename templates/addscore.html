@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Malvern Rifle Club Scores - Add Scores</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"">
+</head>
+<body>
+    <h1>Submit Scores</h1>
+    <form method="POST" action="{{ url_for('add_score') }}">
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Sighters</th>
+                <th>Counters</th>
+                <th>Shots</th>
+                <th>Total Score</th>
+                <th>Range</th>
+                <th>Date</th>
+            </tr>
+            <tr>
+                <td><input type="text" name="name" required></td>
+                <td><input type="number" name="match_sighters" required></td>
+                <td><input type="number" name="match_counters" required></td>
+                <td><input type="number" name="shots" required></td>
+                <td><input type="float" step="0.01" name="score" required></td>
+                <td><input type="text" name="distance" required></td>
+                <td><input type="date" name="date" required></td>
+            </tr>
+            </tr>
+        </table>
+        <input type="submit" value="Submit">
+    </form>
+    <script>
+        document.getElementById('match_sighters').addEventListener('change', function() {
+            var match_sighters = parseInt(document.getElementById('match_sighters').value);
+            var match_counters = parseInt(document.getElementById('match_counters').value);
+            var shots = match_sighters + match_counters;
+            document.getElementById('shots').value = shots;
+          });
+          
+          document.getElementById('match_counters').addEventListener('change', function() {
+            var match_sighters = parseInt(document.getElementById('match_sighters').value);
+            var match_counters = parseInt(document.getElementById('match_counters').value);
+            var shots = match_sighters + match_counters;
+            document.getElementById('shots').value = shots;
+          });      
+    </script>
+</body>
+</html>
