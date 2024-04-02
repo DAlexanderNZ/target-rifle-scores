@@ -9,7 +9,7 @@ tr:nth-of-type(even) {
 
 th, td {
     padding: 8px;
-    text-align: left;
+    text-align: center;
     border: 1px solid #8887877b;
 }
 

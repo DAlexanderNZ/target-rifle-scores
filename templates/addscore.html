@@ -8,19 +8,58 @@
 </head>
 <body>
     <h1>Submit Scores</h1>
+    <p>
+        <ol>
+            <li>Select a competition from the list below</li>
+            <li>Select a match or create a new one</li>
+            <li>Enter shooter detail and results</li>
+        </ol>
+    </p>
     <form method="POST" action="{{ url_for('add_score') }}">
+        <table>
+            <tr class="head_table">
+                <th>Competition</th>
+                <th>Match</th>
+                <th>Range</th>
+                <th>Date</th>
+            </tr>
+            <tr>
+                <!-- Select competition from options in database or create new comptition-->
+                <td id="competition_select">
+                    <select>
+                        {% for comp in competitions %}
+                        <option value="match_ids: {{ comp.match_id }}">{{ comp.competition }}</option>
+                        {% endfor %}
+                        <option value="new_comp">New Competition</option>
+                    </select>
+                </td>
+                <!-- Select a match from the competition or create a new match-->
+                <td id="match_select">
+                    <select>
+                        {% for matchs in match_name %}
+                            <option id="match_name"> {{ matchs.match_name }}</option>
+                        {% endfor %}
+                        <option value="new_match">New Match</option>
+                    </select>
+                </td>
+                <td>
+                    <!-- TODO: Dynamically update based on selected match-->
+                    <h3 id="distance">300y</h3>
+                </td>
+                <td id="match_date">
+                    <input type="date" name="date" id="date_picker" value="" required>
+                </td>
+            </tr>
+        </table>
+        <p id="competition_description">Please pick a competition to start</p>
         <table id="score_input">
             <tr>
                 <th></th>
                 <th>Name</th>
-                <th>Sighters</th>
-                <th>Counters</th>
                 <th>Shots</th>
                 <th>Total Score</th>
-                <th>Range</th>
-                <th>Date</th>
             </tr>
-            <!--- Table rows are created dynamically using JavaScript below --->
+            <!-- Table rows are created dynamically using JavaScript below -->
         </table>
         <input type="submit" value="Submit">
     </form>
@@ -35,12 +74,8 @@
             new_row.id = "new_row_" + row_id
             let html = '<td id="button_' + row_id + '"><button type="button" onclick="add_row()" id="row_add_button_' + row_id + '">➕</button></td>\
                 <td><input type="text" name="name" required></td>\
-                <td><input type="number" name="match_sighters" required></td>\
-                <td><input type="number" name="match_counters" required></td>\
                 <td id="shots_input_' + row_id + '"></td>\
-                <td><input type="float" step="0.01" name="score" required></td>\
-                <td><input type="text" name="distance" required></td>\
-                <td><input type="date" name="date" required></td>'
+                <td><input type="float" step="0.01" name="score" required></td>'
             new_row.innerHTML = html
             score_input_table.appendChild(new_row)
             render_shots(row_id)
@@ -105,8 +140,16 @@
 
         //Load first row on page load
         document.addEventListener('DOMContentLoaded', function(){
+            document.getElementById('date_picker').value = toDateInputValue(new Date())
             add_row()
-        })    
+        })
+        
+        function toDateInputValue(dateObject){
+            const local = new Date(dateObject);
+            local.setMinutes(dateObject.getMinutes() - dateObject.getTimezoneOffset());
+            return local.toJSON().slice(0,10);
+        }
+
     </script>
 </body>
 </html>
