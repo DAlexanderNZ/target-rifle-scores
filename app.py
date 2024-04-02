@@ -33,6 +33,29 @@ for score in scores:
     if len(score["shots"]) != len(score["shot_type"]):
         print(f'Number of shots and shot types do not match, {score["name"]}')
 
+#Sample comptition and matchs
+competition = [
+    {"competition": "Malvern Club Champs",
+    "description": "Range days counting towards the Malvern Club Championship",
+    "match_id": "1,2"}
+]
+match_name =  [
+    {"match_id": 1,
+    "match_name": "First 300y",
+    "match_type": "7s 300y"},
+    {"match_id": 2,
+    "match_name": "First 500y",
+    "match_type":"10s 500y"} 
+]
+match_type = [
+    {"match_type": "7s 300y",
+    "match_sighters": 2,
+    "match_counters": 7},
+    {"match_type": "10s 500y",
+    "match_sighters": 2,
+    "match_counters": 10}
+]
+
 @app.route('/')
 def index():
     return render_template('index.html', results=scores, zip=zip)
@@ -42,21 +65,18 @@ def add_score():
     if request.method == 'POST':
         #Handle form submission
         name = request.form['name'].title()
-        match_sighters = request.form['match_sighters']
-        match_counters = request.form['match_counters']
         shots = request.form['shots']
-        #shot_type = request.form['shot_type']
         score = request.form['score']
-        distance = request.form['distance']
+        #match_id = request.form['match_id']
         date = request.form['date']
 
         #Validate form data
 
 
         #Store data
-        print(f'{name} {match_sighters} {match_counters} {shots} {score} {distance} {date}')
+        print(f'{name} {shots} {score} {date}')
 
-    return render_template('addscore.html', shots=10 + 2)
+    return render_template('addscore.html', competitions=competition, match_name=match_name, match_type=match_type, shots=(match_type[0]["match_sighters"] + match_type[0]["match_counters"]))
 
 if __name__ == '__main__':
     app.run(debug=True)
