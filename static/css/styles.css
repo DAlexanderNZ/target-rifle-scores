@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 table {
     border-collapse: collapse;
     width: 100%;
@@ -15,6 +21,31 @@ th, td {
 
 th {
     background-color: f2f2f2;
+}
+
+select {
+    border: 1px solid var(--select-border);
+    border-radius: 0.25em;
+    padding: 0.25em 0.5em;
+    font-size: 1.25rem;
+    cursor: pointer;
+    line-height: 1.1;
+    background-color: #fffffffa;
+    background-image: linear-gradient(to top, #f9f9f9, #fff 33%);
+  }
+
+select:root {
+    --select-border: #777;
+    --select-focus: blue;
+    --select-arrow: var(--select-border);
+}
+
+select:select::after {
+    content: "";
+    width: 0.8em;
+    height: 0.5em;
+    background-color: var(--select-arrow);
+    clip-path: polygon(100% 0%, 0 0%, 50% 100%);
 }
 
 .shot {
