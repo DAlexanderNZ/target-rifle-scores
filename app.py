@@ -76,7 +76,7 @@ def add_score():
         #Store data
         print(f'{name} {shots} {score} {date}')
 
-    return render_template('addscore.html', competitions=competition, match_name=match_name, match_type=match_type, shots=(match_type[0]["match_sighters"] + match_type[0]["match_counters"]))
+    return render_template('addscore.html', competitions=competition, match_name=match_name, match_type=match_type)
 
 if __name__ == '__main__':
     app.run(debug=True)
