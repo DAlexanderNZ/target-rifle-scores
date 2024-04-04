@@ -12,13 +12,6 @@ function match_type_data(data){
 //Define and render rows and contents for the table
 let row_id = 0
 const score_input_table = document.getElementById('score_input')
-//TODO: Add Flask logic to load type_class's available from database.
-class_types = '<select>\
-            <option onchange="update_to_tr(' + row_id + ')">TR</option>\
-            <option onchange="update_to_fclass(' + row_id + ')">FTR</option>\
-            <option onchange="update_to_fclass(' + row_id + ')">F-Open</option>\
-            </select>'
-
 //increment row_id to allow for unique row ids and existing_rows to existing rows in the table
 function add_row(){
     console.log("create_row")
@@ -27,7 +20,7 @@ function add_row(){
     new_row.id = "new_row_" + row_id
     let html = '<td id="button_' + row_id + '"><button type="button" onclick="add_row()" id="row_add_button_' + row_id + '">➕</button></td>\
         <td><input type="text" name="name" required></td>\
-        <td id="type_class">' + class_types + '</td>\
+        <td>' + get_class_types(row_id) + '</td>\
         <td id="shots_input_' + row_id + '"></td>\
         <td><span type="float" step="0.01" name="score" id="score_' + row_id + '" required></span></td>'
     new_row.innerHTML = html
@@ -66,6 +59,15 @@ function remove_row(removal_row_id){
     }
 }
 
+//TODO: Add Flask logic to load type_class's available from database.
+function get_class_types(row_id){
+    return class_types = '<select id="type_class_' + row_id + '" onchange="update_to_fclass(' + row_id + ')">\
+    <option>TR</option>\
+    <option>FTR</option>\
+    <option>F-Open</option>\
+    </select>'
+}
+
 //Define the options for shot values. TODO: Switch case for 6 & V enabling when changing shooter class type between TR and F-Class
 let shots_input = document.getElementById('shots_input_')
 function add_shot(new_row_id, position){
@@ -77,8 +79,8 @@ function add_shot(new_row_id, position){
     // X & 6 and V are exclusive depending on the shooter being TR or F-Class
     let html = '\
         <option value="6.01" id="X_' + new_row_id + position +'"disabled>X</option>\
-        <option value="5.01" id="V_' + new_row_id + position +'">V</option\
-        <option value="6" id="6_' + new_row_id + position +'" disabled>6</option>\
+        <option value="5.01" id="V_' + new_row_id + position +'">V</option>\
+        <option value="6" id="6_' + new_row_id + position +'"disabled>6</option>\
         <option value="5" selected>5</option>\
         <option value="4">4</option>\
         <option value="3">3</option>\
@@ -144,7 +146,7 @@ function update_score_total(row_id){
 //Handles changes to sighter select state
 //TODO: Enforce rule that first sigher can only be converted with the second sighter
 function update_to_counter(row_id, position){
-    new_shot_pos = document.getElementById('shots_input_' + row_id).childElementCount - 2
+    let new_shot_pos = document.getElementById('shots_input_' + row_id).childElementCount - 2
     add_shot(row_id, new_shot_pos)
     unconverted_sighters++
     //Incorrect first at enforcing sighter rule
@@ -172,22 +174,26 @@ function update_to_sighter(row_id, position){
     update_score_total(row_id)
 }
 
-//Shooter class type change handling. Not yet working
+//Shooter class type change handling
 function update_to_fclass(row_id){
     console.log("Update to F-Class")
-    for (i = 0; i < document.getElementById('shots_input_' + row_id).childElementCount - 2; i++){
+    for (let i = 0; i < document.getElementById('shots_input_' + row_id).childElementCount - 2; i++){
         document.getElementById('X_' + row_id + i).removeAttribute('disabled', 'disabled')
         document.getElementById('6_' + row_id + i).removeAttribute('disabled', 'disabled')
-        document.getElementById('V_' + row_id + i).setAttribute('disabled')
+        document.getElementById('V_' + row_id + i).setAttribute('disabled', 'disabled')
     }
+    let type_select = document.getElementById('type_class_' + row_id)
+    type_select.onchange = function () {update_to_tr(row_id)}
 }
 
+//TODO: Change any X or 6 score values back to V, otherwise over total scores can be entered
 function update_to_tr(row_id){
     console.log("Update to TR")
-    for (i = 0; i < document.getElementById('shots_input_' + row_id).childElementCount - 2; i++){
-        document.getElementById('X_' + row_id + i).setAttribute('disabled')
-        document.getElementById('6_' + row_id + i).setAttribute('disabled')
+    for (let i = 0; i < document.getElementById('shots_input_' + row_id).childElementCount - 2; i++){
+        document.getElementById('X_' + row_id + i).setAttribute('disabled', 'disabled')
+        document.getElementById('6_' + row_id + i).setAttribute('disabled', 'disabled')
         document.getElementById('V_' + row_id + i).removeAttribute('disabled', 'disabled')
     }
+    let type_select = document.getElementById('type_class_' + row_id)
+    type_select.onchange = function () {update_to_fclass(row_id)}
 }
-
