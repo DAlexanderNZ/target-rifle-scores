@@ -13,13 +13,14 @@ function match_type_data(data){
 let row_id = 0
 const score_input_table = document.getElementById('score_input')
 //increment row_id to allow for unique row ids and existing_rows to existing rows in the table
+//TODO: Autocompletion suggestions of name from DB after 4 or more chars are entered. To help ensure correct entry and cut down on typo errors.
 function add_row(){
     console.log("create_row")
     row_id++
     let new_row = document.createElement('tr')
     new_row.id = "new_row_" + row_id
     let html = '<td id="button_' + row_id + '"><button type="button" onclick="add_row()" id="row_add_button_' + row_id + '">➕</button></td>\
-        <td><input type="text" name="name" required></td>\
+        <td><input type="text" name="name" title="Shooter Name" required></td>\
         <td>' + get_class_types(row_id) + '</td>\
         <td id="shots_input_' + row_id + '"></td>\
         <td><span type="float" step="0.01" name="score" id="score_' + row_id + '" required></span></td>'
@@ -61,7 +62,7 @@ function remove_row(removal_row_id){
 
 //TODO: Add Flask logic to load type_class's available from database.
 function get_class_types(row_id){
-    return class_types = '<select id="type_class_' + row_id + '" onchange="update_to_fclass(' + row_id + ')">\
+    return class_types = '<select title="Select Shooter Class" id="type_class_' + row_id + '" onchange="update_to_fclass(' + row_id + ')">\
     <option>TR</option>\
     <option>FTR</option>\
     <option>F-Open</option>\
@@ -75,6 +76,7 @@ function add_shot(new_row_id, position){
     console.log("create_shot row " + new_row_id)
     let select_shot = document.createElement('select')
     select_shot.id = "row_" + new_row_id +"_shot_" + position
+    select_shot.title = "Select Shot Score"
     select_shot.onchange = function () {update_score_total(new_row_id)}
     // X & 6 and V are exclusive depending on the shooter being TR or F-Class
     let html = '\
@@ -109,6 +111,7 @@ function  add_sighter_option(new_row_id, position){
     let sighter_option = document.createElement('input')
     sighter_option.type = "checkbox"
     sighter_option.id = "row_" + new_row_id + "_sighter_" + position
+    sighter_option.title = "Sighter"
     sighter_option.onchange = function () {update_to_counter(new_row_id, position)}
     shots_input.appendChild(sighter_option)
 }

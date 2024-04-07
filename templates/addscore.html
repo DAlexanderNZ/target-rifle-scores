@@ -12,7 +12,7 @@
         <ol>
             <li>Select a competition from the list below</li>
             <li>Select a match or create a new one</li>
-            <li>Enter shooter detail and results</li>
+            <li>Enter shooter details and results</li>
         </ol>
     </p>
     <form method="POST" action="{{ url_for('add_score') }}">
@@ -26,7 +26,7 @@
             <tr>
                 <!-- Select competition from options in database or create new comptition-->
                 <td id="competition_select">
-                    <select>
+                    <select title="Select relevent competition">
                         {% for comp in competitions %}
                         <option value="match_ids: {{ comp.match_id }}">{{ comp.competition }}</option>
                         {% endfor %}
@@ -35,7 +35,7 @@
                 </td>
                 <!-- Select a match from the competition or create a new match-->
                 <td id="match_select">
-                    <select>
+                    <select title="Select match in competition">
                         {% for matchs in match_name %}
                             <option id="match_name"> {{ matchs.match_name }}</option>
                         {% endfor %}
@@ -47,7 +47,7 @@
                     <h3 id="distance">300y</h3>
                 </td>
                 <td id="match_date">
-                    <input type="date" name="date" id="date_picker" value="" required>
+                    <input type="date" name="date" id="date_picker" title="Select date of match and scores" value="" required>
                 </td>
             </tr>
         </table>
@@ -62,7 +62,7 @@
             </tr>
             <!-- Table rows are created dynamically using JavaScript below -->
         </table>
-        <input type="submit" value="Submit">
+        <input type="submit" value="Submit" title="Submit scores">
     </form>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>
