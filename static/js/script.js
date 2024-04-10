@@ -80,8 +80,8 @@ function add_shot(new_row_id, position){
     select_shot.onchange = function () {update_score_total(new_row_id)}
     // X & 6 and V are exclusive depending on the shooter being TR or F-Class
     let html = '\
-        <option value="6.01" id="X_' + new_row_id + position +'"disabled>X</option>\
-        <option value="5.01" id="V_' + new_row_id + position +'">V</option>\
+        <option value="6.001" id="X_' + new_row_id + position +'"disabled>X</option>\
+        <option value="5.001" id="V_' + new_row_id + position +'">V</option>\
         <option value="6" id="6_' + new_row_id + position +'"disabled>6</option>\
         <option value="5" selected>5</option>\
         <option value="4">4</option>\
