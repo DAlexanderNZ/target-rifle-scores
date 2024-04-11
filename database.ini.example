@@ -1,5 +1,5 @@
 [postgresql]
 host=localhost
-database=target_rifle_scores
+dbname=target_rifle_scores
 user=user
 password=password

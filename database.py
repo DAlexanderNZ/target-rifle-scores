@@ -19,13 +19,7 @@ def connect():
     config = load_config()
     print(config)
     try: 
-        conn = psycopg.connect(
-            host='localhost',\
-            port=5432,
-            dbname='target_rifle_scores',\
-            user='target',\
-            password='target'
-        )
+        conn = psycopg.connect(**config)
         print(f'Connected to {config["database"]} database')
         return conn
     except (Exception, psycopg.DatabaseError) as error:
@@ -84,7 +78,7 @@ def create_tables():
             match_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             match_name VARCHAR,
             match_type VARCHAR,
-            match_descripton VARCHAR,
+            match_description VARCHAR,
             CONSTRAINT match_type_fk FOREIGN KEY (match_type)
                 REFERENCES match_type (match_type)
                 ON DELETE CASCADE
@@ -104,7 +98,7 @@ def create_tables():
             CONSTRAINT competition_fk FOREIGN KEY (competition)
                 REFERENCES competition (competition)
                 ON DELETE CASCADE,
-            CONSTRIANT match_id_fk FOREIGN KEY (match_id)
+            CONSTRAINT match_id_fk FOREIGN KEY (match_id)
                 REFERENCES match (match_id)
                 ON DELETE CASCADE
         )
@@ -121,10 +115,10 @@ def create_tables():
                 REFERENCES shooter (shooter_id)
                 ON DELETE CASCADE,
             FOREIGN KEY (competition)
-                REFERENCES competition_match (competition)
+                REFERENCES competition (competition)
                 ON DELETE CASCADE,
             FOREIGN KEY (match_id)
-                REFERENCES competition_match (match_id)
+                REFERENCES match (match_id)
                 ON DELETE CASCADE,
             FOREIGN KEY (class)
                 REFERENCES class (class)
