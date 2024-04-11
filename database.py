@@ -17,18 +17,25 @@ def load_config(filename='database.ini', section='postgresql'):
 def connect():
     """ Connect to the PostgreSQL database server """
     config = load_config()
+    print(config)
     try: 
-        with psycopg.connect('dbname=' + config['database'] + ' user=' + config['user']) as conn:
-            print(f'Connected to {config["database"]} database')
-            return conn
+        conn = psycopg.connect(
+            host='localhost',\
+            port=5432,
+            dbname='target_rifle_scores',\
+            user='target',\
+            password='target'
+        )
+        print(f'Connected to {config["database"]} database')
+        return conn
     except (Exception, psycopg.DatabaseError) as error:
-        print(error)
+        print(f'Error : {error}')
 
 def create_tables():
     """ Create tables in the PostgreSQL database """
     commands = (
         """
-        CREATE TABLE club (
+        CREATE TABLE IF NOT EXISTS club (
             club_name VARCHAR PRIMARY KEY,
             club_country_code CHAR(3) NOT NULL,
             club_location VARCHAR,
@@ -37,35 +44,35 @@ def create_tables():
         )
         """,
         """
-        CREATE TABLE shooter (
-            shooter_id SERIAL PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS shooter (
+            shooter_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             shooter_nra_id INT,
             shooter_first_name VARCHAR,
             shooter_last_name VARCHAR,
-            shooter_dob DATE,
+            shooter_dob DATE
         )
         """,
         """
-        CREATE TABLE shooter_club (
+        CREATE TABLE IF NOT EXISTS shooter_club (
             shooter_id INT NOT NULL,
             club_name VARCHAR NOT NULL,
             date_joined DATE,
-            FOREIGN KEY (shooter_id)
-                REFERENCE shooter (shooter_id) 
+            CONSTRAINT shooter_fk FOREIGN KEY (shooter_id) 
+                REFERENCES shooter(shooter_id)
                 ON DELETE CASCADE,
-            FOREIGN KEY (club_name)
-                REFERENCE club (club_name)
+            CONSTRAINT club_fk FOREIGN KEY (club_name) 
+                REFERENCES club(club_name)
                 ON DELETE CASCADE
         )
         """,
         """
-        CREATE TABLE class (
+        CREATE TABLE IF NOT EXISTS class (
             class VARCHAR PRIMARY KEY,
             score_type CHAR(1)
         )
         """,
         """
-        CREATE TABLE match_type (
+        CREATE TABLE IF NOT EXISTS match_type (
             match_type VARCHAR PRIMARY KEY,
             match_sighters SMALLINT,
             match_counters SMALLINT,
@@ -73,37 +80,37 @@ def create_tables():
         )
         """, 
         """
-        CREATE TABLE match (
-            match_id SERIAL PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS match (
+            match_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             match_name VARCHAR,
             match_type VARCHAR,
             match_descripton VARCHAR,
-            FOREIGN KEY (match_type)
-                REFERENCE match_type (match_type)
+            CONSTRAINT match_type_fk FOREIGN KEY (match_type)
+                REFERENCES match_type (match_type)
                 ON DELETE CASCADE
         )
         """,
         """
-        CREATE TABLE competition (
+        CREATE TABLE IF NOT EXISTS competition (
             competition VARCHAR PRIMARY KEY,
-            competition_description VARCHAR,
+            competition_description VARCHAR
         )
         """,
         """
-        CREATE TABLE competition_match (
+        CREATE TABLE IF NOT EXISTS competition_match (
             competition VARCHAR,
             match_id INT,
-            PRIMARY KEY (competition, match_id)
-            FOREIGN KEY (competition)
-                REFERENCE competition (competition)
+            PRIMARY KEY (competition, match_id),
+            CONSTRAINT competition_fk FOREIGN KEY (competition)
+                REFERENCES competition (competition)
                 ON DELETE CASCADE,
-            FOREIGN KEY (match_id)
-                REFERENCE match (match_id)
-                ON DELETE CASCADE,
+            CONSTRIANT match_id_fk FOREIGN KEY (match_id)
+                REFERENCES match (match_id)
+                ON DELETE CASCADE
         )
         """,
         """
-        CREATE TABLE score (
+        CREATE TABLE IF NOT EXISTS score (
             shooter_id INT,
             competition VARCHAR,
             match_id INT,
@@ -111,29 +118,31 @@ def create_tables():
             shot_type CHAR(1)[],
             class VARCHAR,
             FOREIGN KEY (shooter_id)
-                REFERENCE shooter (shooter_id)
+                REFERENCES shooter (shooter_id)
                 ON DELETE CASCADE,
             FOREIGN KEY (competition)
-                REFERENCE competition_match (competition)
+                REFERENCES competition_match (competition)
                 ON DELETE CASCADE,
             FOREIGN KEY (match_id)
-                REFERENCE competition_match (match_id)
+                REFERENCES competition_match (match_id)
                 ON DELETE CASCADE,
             FOREIGN KEY (class)
-                REFERENCE class (class)
+                REFERENCES class (class)
                 ON DELETE CASCADE
         )
         """
     )
+    config = load_config()
+    conn = psycopg.connect(**config)
     try:
-        conn = connect()
+        #conn = connect()
         with conn.cursor() as cur:
-            print(f'Creating tables in {load_config()["database"]}')
+            print(f'Creating tables in database')
             for command in commands:
-                printf(f'Executing {command}')  
+                print(f'Executing {command}')  
                 cur.execute(command)
-        conn.commit()
+        #conn.commit()
     except (Exception, psycopg.DatabaseError) as error:
-        print(error)
+        print(f'create_tables: {error}')
 
 create_tables()
