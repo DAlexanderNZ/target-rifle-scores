@@ -14,6 +14,7 @@ def load_config(filename='database.ini', section='postgresql'):
         raise Exception(f'Section {section} not found in {filename}')
     return config
 
+#Doesn't work as expected, returns conn as a closed connection
 def connect():
     """ Connect to the PostgreSQL database server """
     config = load_config()
@@ -25,7 +26,18 @@ def connect():
     except (Exception, psycopg.DatabaseError) as error:
         print(f'Error : {error}')
 
-def create_tables():
+def get_competitions(conn, query='SELECT competition FROM competition'):
+    """ Get the match types from the database """
+    try:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            competitions = cur.fetchall()
+            print(competitions)
+            return(competitions)
+    except (Exception, psycopg.DatabaseError) as error:
+        print(f'get_competitions: {error}')
+
+def create_tables(conn):
     """ Create tables in the PostgreSQL database """
     commands = (
         """
@@ -62,26 +74,28 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS class (
             class VARCHAR PRIMARY KEY,
-            score_type CHAR(1)
+            score_type CHAR(1),
+            name VARCHAR
         )
         """,
         """
         CREATE TABLE IF NOT EXISTS match_type (
-            match_type VARCHAR PRIMARY KEY,
-            match_sighters SMALLINT,
+            match_distance VARCHAR,
             match_counters SMALLINT,
-            distance VARCHAR
+            match_sighters SMALLINT,
+            PRIMARY KEY (match_distance, match_counters)
         )
         """, 
         """
         CREATE TABLE IF NOT EXISTS match (
             match_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             match_name VARCHAR,
-            match_type VARCHAR,
-            match_description VARCHAR,
-            CONSTRAINT match_type_fk FOREIGN KEY (match_type)
-                REFERENCES match_type (match_type)
-                ON DELETE CASCADE
+            match_distance VARCHAR,
+            match_counters SMALLINT,
+            description VARCHAR,
+            CONSTRAINT match_fk FOREIGN KEY (match_distance, match_counters)
+            REFERENCES match_type (match_distance, match_counters)
+            ON DELETE CASCADE
         )
         """,
         """
@@ -111,32 +125,101 @@ def create_tables():
             shots CHAR(1)[],
             shot_type CHAR(1)[],
             class VARCHAR,
-            FOREIGN KEY (shooter_id)
+            CONSTRAINT shooter_id_fk FOREIGN KEY (shooter_id)
                 REFERENCES shooter (shooter_id)
                 ON DELETE CASCADE,
-            FOREIGN KEY (competition)
-                REFERENCES competition (competition)
+            CONSTRAINT competition_match_fk FOREIGN KEY (competition, match_id)
+                REFERENCES competition_match (competition, match_id)
                 ON DELETE CASCADE,
-            FOREIGN KEY (match_id)
-                REFERENCES match (match_id)
-                ON DELETE CASCADE,
-            FOREIGN KEY (class)
+            CONSTRAINT class_fk FOREIGN KEY (class)
                 REFERENCES class (class)
                 ON DELETE CASCADE
         )
         """
     )
-    config = load_config()
-    conn = psycopg.connect(**config)
     try:
-        #conn = connect()
         with conn.cursor() as cur:
             print(f'Creating tables in database')
             for command in commands:
-                print(f'Executing {command}')  
+                #print(f'Executing {command}')  
                 cur.execute(command)
-        #conn.commit()
+        conn.commit()
     except (Exception, psycopg.DatabaseError) as error:
         print(f'create_tables: {error}')
+    
+def default_info(conn):
+    """ Create the default inforamtion for the database. Based on NRANZ classes and match types """
+    classes = (
+        { 'class': 'TR-A', 'score_type':  'V', 'name': 'Target Rifle A Grade'},
+        { 'class': 'TR-B', 'score_type':  'V', 'name': 'Target Rifle B Grade'},
+        { 'class': 'TR-C', 'score_type':  'V', 'name': 'Target Rifle C Grade'},
+        { 'class': 'TR-T', 'score_type':  'V', 'name': 'Target Rifle Tyro Grade'},
+        { 'class': 'FO-O', 'score_type':  'X', 'name': 'F Open'},
+        { 'class': 'FTR-C', 'score_type':  'X', 'name': 'FTR Classic'},
+        { 'class': 'FTR-O', 'score_type':  'X', 'name': 'FTR'},
+        { 'class': 'FPR-O', 'score_type':  'X', 'name': 'FPR (Precision Rifle)'}
+    )
+    with  conn.cursor() as cur:
+        query = "INSERT INTO class (class, score_type, name) VALUES (%(class)s, %(score_type)s, %(name)s)"
+        cur.executemany(query, classes)
 
-create_tables()
+    match_types = (
+        { 'match_distance': '300y', 'match_counters': 7, 'match_sighters': 2},
+        { 'match_distance': '500y', 'match_counters': 7, 'match_sighters': 2},
+        { 'match_distance': '600y', 'match_counters': 7, 'match_sighters': 2},
+        { 'match_distance': '700y', 'match_counters': 7, 'match_sighters': 2},
+        { 'match_distance': '800y', 'match_counters': 7, 'match_sighters': 2},
+        { 'match_distance': '900y', 'match_counters': 7, 'match_sighters': 2},
+        { 'match_distance': '1000y', 'match_counters': 7, 'match_sighters': 2},
+        { 'match_distance': '300y', 'match_counters': 10, 'match_sighters': 2},
+        { 'match_distance': '500y', 'match_counters': 10, 'match_sighters': 2},
+        { 'match_distance': '600y', 'match_counters': 10, 'match_sighters': 2},
+        { 'match_distance': '700y', 'match_counters': 10, 'match_sighters': 2}
+        { 'match_distance': '800y', 'match_counters': 10, 'match_sighters': 2},
+        { 'match_distance': '900y', 'match_counters': 10, 'match_sighters': 2},
+        { 'match_distance': '1000y', 'match_counters': 10, 'match_sighters': 2},
+        { 'match_distance': '300y', 'match_counters': 15, 'match_sighters': 2},
+        { 'match_distance': '500y', 'match_counters': 15, 'match_sighters': 2},
+        { 'match_distance': '600y', 'match_counters': 15, 'match_sighters': 2},
+        { 'match_distance': '700y', 'match_counters': 15, 'match_sighters': 2},
+        { 'match_distance': '800y', 'match_counters': 15, 'match_sighters': 2},
+        { 'match_distance': '900y', 'match_counters': 15, 'match_sighters': 2},
+        { 'match_distance': '1000y', 'match_counters': 15, 'match_sighters': 2}
+    )
+    with conn.cursor() as cur:
+        query = "INSERT INTO match_type (match_distance, match_counters, match_sighters) VALUES (%(match_distance)s, %(match_counters)s, %(match_sighters)s)"
+        cur.executemany(query, match_types)
+    conn.commit()
+
+def create_shooter(shooter,  conn):
+    """ 
+    Create a new shooter 
+    :param shooter: a dictionary of shooter attributes [shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob]
+    :param conn: a connection to the database
+    """
+    try:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO shooter (shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob"")VALUES (%s, %s, %s, %s);", 
+                            (shooter['shooter_nra_id'], shooter['shooter_first_name'], shooter['shooter_last_name'], shooter['shooter_dob']))
+    except (Exception, psycopg.DatabaseError) as error:
+        print(f'create_shooter: {error}')
+
+def record_score(score, conn):
+    """
+    Record scores for shooters in a match
+    :param score: a dictionary of score attributes [shooter_id, competition, match_id, shots, shot_type, class]
+    :param conn: a connection to the database
+    """
+    with conn.cursor() as cur:
+        query = "INSERT INTO score (shooter_id, competition, match_id, shots, shot_type, class) VALUES (%(shooter_id)s, %(competition)s, %(match_id)s, %(shots)s, %(shot_type)s, %(class)s);"
+        cur.execute(query, score)
+    conn.commit()
+
+
+#Database setup
+#config = load_config()
+#conn = psycopg.connect(**config)
+#create_tables(conn)
+#default_info(conn)
+#conn.close()
+

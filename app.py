@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request
+import database
+import psycopg
 import itertools
 
 app = Flask(__name__)
@@ -56,6 +58,10 @@ match_type = [
     "match_counters": 10}
 ]
 
+#Get data from database
+config = database.load_config()
+conn = psycopg.connect(**config)
+
 @app.route('/')
 def index():
     return render_template('index.html', results=scores, zip=zip)
@@ -75,8 +81,11 @@ def add_score():
 
         #Store data
         print(f'{name} {shots} {score} {date}')
+        
+    if request.method == 'GET':
+        competitions = database.get_competitions(conn)
 
-    return render_template('addscore.html', competitions=competition, match_name=match_name, match_type=match_type)
+    return render_template('addscore.html', competitions=competitions, match_name=match_name, match_type=match_type)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -28,7 +28,7 @@
                 <td id="competition_select">
                     <select title="Select relevent competition">
                         {% for comp in competitions %}
-                        <option value="match_ids: {{ comp.match_id }}">{{ comp.competition }}</option>
+                        <option value="match_ids: {{ comp.match_id }}">{{ comp }}</option>
                         {% endfor %}
                         <option value="new_comp">New Competition</option>
                     </select>
