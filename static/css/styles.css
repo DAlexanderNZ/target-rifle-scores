@@ -4,6 +4,33 @@
   box-sizing: border-box;
 }
 
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f2f2f2;
+    padding: 0.5em 1em;
+    margin-bottom: 1em;
+}
+
+/* Style for mobile devices */
+@media only screen and (max-width: 768px) {
+    /* Additional style to hide the navbar by moving it out of view */
+    nav.hide {
+      top: -100px; /* Adjust this value based on the height of your navbar */
+    }
+}
+
+nav a {
+    text-decoration: none;
+    color: black;
+    font-size: 1.5em;
+}
+
+nav a:hover {
+    color: blue;
+}
+
 table {
     border-collapse: collapse;
     width: 100%;

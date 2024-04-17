@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %} {% endblock %}</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>
+    <body>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('add_score') }}">Add Scores</a>
+            <a href="/login.html">Login</a>
+        </nav>
+        <div class="content">
+            {% block content %} {% endblock %}
+        </div>
+        <script>
+            // JavaScript to toggle the visibility of the navbar on scroll
+            let prevScrollpos = window.pageYOffset;
+            window.onscroll = function() {
+              let currentScrollPos = window.pageYOffset;
+              if (prevScrollpos > currentScrollPos) {
+                document.getElementById("navbar").style.top = "0";
+              } else {
+                document.getElementById("navbar").classList.add('hide');
+              }
+              prevScrollpos = currentScrollPos;
+            }
+            </script>
+    </body>
+</html>

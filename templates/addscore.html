@@ -1,13 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>  
-    <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malvern Rifle Club Scores - Add Scores</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-    <h1>Submit Scores</h1>
+{% extends 'base.html' %}
+{% block title %}Rifle Scores - Add Scores{% endblock %}
+{% block content %}
+<h1>Submit Scores</h1>
     <p>
         <ol>
             <li>Select a competition from the list below</li>
@@ -61,7 +55,7 @@
                 <th>Shots</th>
                 <th>Total Score</th>
             </tr>
-            <!-- Table rows are created dynamically using JavaScript below -->
+            <!-- Table rows are created dynamically using JavaScript -->
         </table>
         <input type="submit" value="Submit" title="Submit scores">
     </form>
@@ -69,5 +63,4 @@
     <script>
         const match_type = match_type_data('{{ match_type|tojson }}')
     </script>
-</body>
-</html>
+{% endblock %}
