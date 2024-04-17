@@ -19,26 +19,23 @@
             </tr>
             <tr>
                 <!-- Select competition from options in database or create new comptition-->
-                <td id="competition_select">
-                    <select title="Select relevent competition">
+                <td>
+                    <select  id="competition_select" title="Select relevent competition" onchange="update_matches()">
                         {% for comp in competitions %}
-                        <option value="match_ids: {{ comp.match_id }}">{{ comp }}</option>
+                        <option value=" {{ comp[0] }} "> {{ comp[0] }} </option>
                         {% endfor %}
                         <option value="new_comp">New Competition</option>
                     </select>
                 </td>
                 <!-- Select a match from the competition or create a new match-->
-                <td id="match_select">
-                    <select title="Select match in competition">
-                        {% for matchs in match_name %}
-                            <option id="match_name"> {{ matchs.match_name }}</option>
-                        {% endfor %}
-                        <option value="new_match">New Match</option>
+                <td>
+                    <select id="match_select" title="Select match in competition">
+                        <!-- <option value="new_match">New Match</option> -->
                     </select>
                 </td>
                 <td>
                     <!-- TODO: Dynamically update based on selected match-->
-                    <h3 id="distance">300y</h3>
+                    <h3 id="distance"></h3>
                 </td>
                 <td id="match_date">
                     <input type="date" name="date" id="date_picker" title="Select date of match and scores" value="" required>
@@ -50,7 +47,7 @@
             <tr>
                 <th></th>
                 <th>Name</th>
-                <th>Class</th>
+                <th>Class & Grade</th>
                 <!-- TODO: Add help popup button -->
                 <th>Shots</th>
                 <th>Total Score</th>
@@ -61,6 +58,7 @@
     </form>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>
-        const match_type = match_type_data('{{ match_type|tojson }}')
+        const classes = json_data('{{ classes|tojson }}')
+        const match_type = json_data('{{ match_type|tojson }}')
     </script>
 {% endblock %}

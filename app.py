@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
 import database
 import psycopg
 import itertools
+import json
 
 app = Flask(__name__)
 
@@ -70,22 +71,43 @@ def index():
 def add_score():
     if request.method == 'POST':
         #Handle form submission
-        name = request.form['name'].title()
+        #TODO: get shooter ID instead of name
+        name = request.form['name'].title() 
         shots = request.form['shots']
         score = request.form['score']
-        #match_id = request.form['match_id']
-        date = request.form['date']
+        match_id = request.form['match_id']
+        date = request.form['match_date']
 
         #Validate form data
 
-
+        score = [shooter_id, competition, match_id, shots, shot_type, class_type, date]
         #Store data
-        print(f'{name} {shots} {score} {date}')
+        print(score)
+        database.record_score(score, conn)
         
     if request.method == 'GET':
         competitions = database.get_competitions(conn)
+        classes = database.get_classes(conn)
 
-    return render_template('addscore.html', competitions=competitions, match_name=match_name, match_type=match_type)
+    return render_template('addscore.html', competitions=competitions, classes=classes, match_name=match_name, match_type=match_type)
+
+@app.route('/getmatches', methods=['POST'])
+def get_matches():
+    competition = request.json['competition'].strip()
+    print(competition)
+    matches = database.get_matches(conn, competition)
+    return Response(json.dumps(matches), mimetype='application/json')
+
+@app.route('/addcompetition', methods=['GET', 'POST'])
+def add_competition():
+    if request.method == 'POST':
+        #Handle form submission
+        competition = request.form['competition']
+        description = request.form['description']
+        match_id = request.form['match_id']
+        match_name = request.form['match_name']
+        match_description = request.form['match_description']
+
 
 if __name__ == '__main__':
     app.run(debug=True)

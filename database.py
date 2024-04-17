@@ -27,16 +27,44 @@ def connect():
         print(f'Error : {error}')
 
 def get_competitions(conn, query='SELECT competition FROM competition'):
-    """ Get the match types from the database """
+    """ Get the competitions from the database """
     try:
         with conn.cursor() as cur:
             cur.execute(query)
             competitions = cur.fetchall()
-            print(competitions)
             return(competitions)
     except (Exception, psycopg.DatabaseError) as error:
         print(f'get_competitions: {error}')
 
+def get_matches(conn, competition):
+    """ Get the matches for a competition from the database """
+    try:
+        with conn.cursor() as cur:
+            query = """
+            SELECT match.match_id, match.match_name, match.match_distance, match.match_counters, match.description
+            FROM competition_match
+            INNER JOIN match ON competition_match.match_id = match.match_id
+            WHERE competition_match.competition = %s
+            """
+            cur.execute(query, (competition,))
+            matches = cur.fetchall()
+            if not matches:
+                print("No matches found. Check the competition parameter and database state.")
+            return matches
+    except (Exception, psycopg.DatabaseError) as error:
+        print(f"get_matches error: {error}")
+
+def get_classes(conn):
+    """ Get the classes from the database """
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT class, name FROM class")
+            classes = cur.fetchall()
+            return classes
+    except (Exception, psycopg.DatabaseError) as error:
+        print(f'get_classes: {error}')
+        return None
+    
 def create_tables(conn):
     """ Create tables in the PostgreSQL database """
     commands = (
@@ -124,7 +152,9 @@ def create_tables(conn):
             match_id INT,
             shots CHAR(1)[],
             shot_type CHAR(1)[],
+            total REAL,
             class VARCHAR,
+            date DATE,
             CONSTRAINT shooter_id_fk FOREIGN KEY (shooter_id)
                 REFERENCES shooter (shooter_id)
                 ON DELETE CASCADE,
@@ -174,7 +204,7 @@ def default_info(conn):
         { 'match_distance': '300y', 'match_counters': 10, 'match_sighters': 2},
         { 'match_distance': '500y', 'match_counters': 10, 'match_sighters': 2},
         { 'match_distance': '600y', 'match_counters': 10, 'match_sighters': 2},
-        { 'match_distance': '700y', 'match_counters': 10, 'match_sighters': 2}
+        { 'match_distance': '700y', 'match_counters': 10, 'match_sighters': 2},
         { 'match_distance': '800y', 'match_counters': 10, 'match_sighters': 2},
         { 'match_distance': '900y', 'match_counters': 10, 'match_sighters': 2},
         { 'match_distance': '1000y', 'match_counters': 10, 'match_sighters': 2},
@@ -199,6 +229,7 @@ def create_shooter(shooter,  conn):
     """
     try:
             with conn.cursor() as cur:
+                #This query needs updating to best practice 
                 cur.execute("INSERT INTO shooter (shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob"")VALUES (%s, %s, %s, %s);", 
                             (shooter['shooter_nra_id'], shooter['shooter_first_name'], shooter['shooter_last_name'], shooter['shooter_dob']))
     except (Exception, psycopg.DatabaseError) as error:
@@ -207,11 +238,11 @@ def create_shooter(shooter,  conn):
 def record_score(score, conn):
     """
     Record scores for shooters in a match
-    :param score: a dictionary of score attributes [shooter_id, competition, match_id, shots, shot_type, class]
+    :param score: a dictionary of score attributes [shooter_id, competition, match_id, shots, shot_type, total, class, date]
     :param conn: a connection to the database
     """
     with conn.cursor() as cur:
-        query = "INSERT INTO score (shooter_id, competition, match_id, shots, shot_type, class) VALUES (%(shooter_id)s, %(competition)s, %(match_id)s, %(shots)s, %(shot_type)s, %(class)s);"
+        query = "INSERT INTO score (shooter_id, competition, match_id, shots, shot_type, total, class, date) VALUES (%(shooter_id)s, %(competition)s, %(match_id)s, %(shots)s, %(shot_type)s, %(total)s %(class)s, %(date)s);"
         cur.execute(query, score)
     conn.commit()
 

@@ -1,11 +1,12 @@
 //Load first row on page load
 document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('date_picker').value = toDateInputValue(new Date())
+    get_competition_matches()
     add_row()
 })
 
 //Get data from flask passed though to js
-function match_type_data(data){
+function json_data(data){
     return JSON.parse(data)
 }
 
@@ -19,7 +20,7 @@ function add_row(){
     row_id++
     let new_row = document.createElement('tr')
     new_row.id = "new_row_" + row_id
-    let html = '<td id="button_' + row_id + '"><button type="button" onclick="add_row()" id="row_add_button_' + row_id + '">➕</button></td>\
+    let html = '<td title="Add another shooter" id="button_' + row_id + '"><button type="button" onclick="add_row()" id="row_add_button_' + row_id + '">➕</button></td>\
         <td><input type="text" name="name" title="Shooter Name" required></td>\
         <td>' + get_class_types(row_id) + '</td>\
         <td id="shots_input_' + row_id + '"></td>\
@@ -60,13 +61,67 @@ function remove_row(removal_row_id){
     }
 }
 
+function update_matches(){
+    console.log("Update matches")
+    get_competition_matches()
+}
+
+function get_competition_matches(){
+    let competition = document.getElementById('competition_select').value;
+    fetch("/getmatches", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({competition: competition})
+    })
+    .then(response => response.json()) // Convert the response to JSON
+    .then(data => {
+        matches = data; // Store the data in matches
+        console.log("Gathered matches for ", matches); // Log the matches
+        //Create options for match_select
+        let match_select = document.getElementById('match_select')
+        match_select.options.length = 0 //Clear existing options
+        //TODO: match_distance needs to update on change of match_select options
+        //let match_distance = document.getElementById('distance') 
+        for (let i = 0; i < matches.length; i++){
+            let match_option = document.createElement('option')
+            match_option.value = matches[i][0]
+            match_option.textContent = matches[i][1]
+            match_select.append(match_option);
+        }
+        //Update the competition_description
+        let competition_description = document.getElementById('competition_description')
+
+    })
+    .catch(error => console.error('Error:', error)); // Log any errors
+}
+
+function update_distance(matches){
+    let match = document.getElementById('match_select').value;
+    
+}
+
+
 //TODO: Add Flask logic to load type_class's available from database.
 function get_class_types(row_id){
-    return class_types = '<select title="Select Shooter Class" id="type_class_' + row_id + '" onchange="update_to_fclass(' + row_id + ')">\
-    <option>TR</option>\
+    class_types = '<select title="Select Shooter Class" id="type_class_' + row_id + '" onchange="update_to_fclass(' + row_id + ')">\
+    <option value=>TR</option>\
     <option>FTR</option>\
     <option>F-Open</option>\
     </select>'
+    grade = get_tr_grades()
+    return class_types + grade
+}
+
+//TODO: When selecting a shooter name, get their current grade in the current comp and set that is the default option if available
+function get_tr_grades(){
+    grade = '<select title="Select Shooter Grade" id="grades">'
+    for (let i = 0; i < classes.length; i++){
+        if (classes[i][0].startsWith('TR-')){
+            grade = grade.concat('', '<option title="' + classes[i][1] + '" value="' + classes[i][0] + '">' + classes[i][0] + '</option>')
+        }   
+    }
+    grade = grade.concat('', '</select>')
+    return grade
 }
 
 //Define the options for shot values. TODO: Switch case for 6 & V enabling when changing shooter class type between TR and F-Class
@@ -107,7 +162,7 @@ function add_shot(new_row_id, position){
 }*/
 
 //Sighter as checkbox
-function  add_sighter_option(new_row_id, position){
+function add_sighter_option(new_row_id, position){
     let sighter_option = document.createElement('input')
     sighter_option.type = "checkbox"
     sighter_option.id = "row_" + new_row_id + "_sighter_" + position
@@ -143,7 +198,9 @@ function update_score_total(row_id){
         let shot_value = document.getElementById('row_' + row_id + '_shot_' + i).value
         total_score = parseFloat(total_score) + parseFloat(shot_value)
     }
-    document.getElementById('score_' + row_id).innerHTML = total_score.toFixed(2)
+    score_element = document.getElementById('score_' + row_id)
+    score_element.value = total_score.toFixed(2)
+    score_element.innerHTML = total_score.toFixed(2)
 }
 
 //Handles changes to sighter select state
@@ -187,6 +244,7 @@ function update_to_fclass(row_id){
     }
     let type_select = document.getElementById('type_class_' + row_id)
     type_select.onchange = function () {update_to_tr(row_id)}
+    document.getElementById('grades').style.visibility = 'hidden'
 }
 
 //TODO: Change any X or 6 score values back to V, otherwise over total scores can be entered
@@ -199,4 +257,5 @@ function update_to_tr(row_id){
     }
     let type_select = document.getElementById('type_class_' + row_id)
     type_select.onchange = function () {update_to_fclass(row_id)}
+    document.getElementById('grades').style.visibility = 'visible'
 }
