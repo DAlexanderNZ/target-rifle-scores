@@ -36,29 +36,6 @@ for score in scores:
     if len(score["shots"]) != len(score["shot_type"]):
         print(f'Number of shots and shot types do not match, {score["name"]}')
 
-#Sample comptition and matchs
-competition = [
-    {"competition": "Malvern Club Champs",
-    "description": "Range days counting towards the Malvern Club Championship",
-    "match_id": "1,2"}
-]
-match_name =  [
-    {"match_id": 1,
-    "match_name": "First 300y",
-    "match_type": "7s 300y"},
-    {"match_id": 2,
-    "match_name": "First 500y",
-    "match_type":"10s 500y"} 
-]
-match_type = [
-    {"match_type": "7s 300y",
-    "match_sighters": 2,
-    "match_counters": 7},
-    {"match_type": "10s 500y",
-    "match_sighters": 2,
-    "match_counters": 10}
-]
-
 #Get data from database
 config = database.load_config()
 conn = psycopg.connect(**config)
@@ -72,15 +49,19 @@ def add_score():
     if request.method == 'POST':
         #Handle form submission
         #TODO: get shooter ID instead of name
-        name = request.form['name'].title() 
-        shots = request.form['shots']
-        score = request.form['score']
+        shooter_id = request.form['name'].title() 
+        competition = request.form['competition']
         match_id = request.form['match_id']
+        shots = request.form['shots']
+        shot_type = request.form['shot_type']
+        total = request.form['score']
+        class_type = request.form['class']
         date = request.form['match_date']
 
         #Validate form data
+        classes = database.get_classes(conn)
 
-        score = [shooter_id, competition, match_id, shots, shot_type, class_type, date]
+        score = [shooter_id, competition, match_id, shots, shot_type, total, class_type, date]
         #Store data
         print(score)
         database.record_score(score, conn)
@@ -88,8 +69,8 @@ def add_score():
     if request.method == 'GET':
         competitions = database.get_competitions(conn)
         classes = database.get_classes(conn)
-
-    return render_template('addscore.html', competitions=competitions, classes=classes, match_name=match_name, match_type=match_type)
+        default_match = [{"match_sighters": 2, "match_counters": 10}]
+    return render_template('addscore.html', competitions=competitions, classes=classes, match_type=default_match)
 
 @app.route('/getmatches', methods=['POST'])
 def get_matches():

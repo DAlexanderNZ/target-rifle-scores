@@ -1,4 +1,5 @@
 //Load first row on page load
+
 document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('date_picker').value = toDateInputValue(new Date())
     get_competition_matches()
@@ -61,13 +62,9 @@ function remove_row(removal_row_id){
     }
 }
 
-function update_matches(){
-    console.log("Update matches")
-    get_competition_matches()
-}
-
+let matches
 function get_competition_matches(){
-    let competition = document.getElementById('competition_select').value;
+    let competition = document.getElementById('competition_select').value
     fetch("/getmatches", {
         method: "POST",
         headers: {'Content-Type': 'application/json'},
@@ -75,53 +72,72 @@ function get_competition_matches(){
     })
     .then(response => response.json()) // Convert the response to JSON
     .then(data => {
-        matches = data; // Store the data in matches
-        console.log("Gathered matches for ", matches); // Log the matches
+        matches = data // Store the data in matches
+        console.log("Gathered matches for ", matches) // Log the matches
         //Create options for match_select
         let match_select = document.getElementById('match_select')
         match_select.options.length = 0 //Clear existing options
-        //TODO: match_distance needs to update on change of match_select options
-        //let match_distance = document.getElementById('distance') 
         for (let i = 0; i < matches.length; i++){
             let match_option = document.createElement('option')
-            match_option.value = matches[i][0]
+            match_option.id = matches[i][1]
+            match_option.value = matches[i][2]
             match_option.textContent = matches[i][1]
-            match_select.append(match_option);
+            match_select.append(match_option)
         }
-        //Update the competition_description
-        let competition_description = document.getElementById('competition_description')
-
+        update_distance() //Update the distance to the selected match       
     })
-    .catch(error => console.error('Error:', error)); // Log any errors
+    .catch(error => console.error('Error:', error)) // Log any errors
 }
 
-function update_distance(matches){
-    let match = document.getElementById('match_select').value;
-    
+function update_matches(){
+    console.log("Update matches")
+    get_competition_matches()
+}
+
+function update_match_descriptions(){
+    let match_description_id = document.getElementById('match_select').id
+    let match_description = document.getElementById('match_description')
+    match_description.textContent = matches[0][5]
+}
+
+//TODO: Also update shots selects with sighters and counters (matches[i][4], matches[i][3])
+function update_distance(){
+    let match_distance = document.getElementById('match_select').value
+    let distance = document.getElementById('distance')
+    distance.value = match_distance
+    distance.textContent = match_distance
 }
 
 
 //TODO: Add Flask logic to load type_class's available from database.
 function get_class_types(row_id){
     class_types = '<select title="Select Shooter Class" id="type_class_' + row_id + '" onchange="update_to_fclass(' + row_id + ')">\
-    <option value=>TR</option>\
-    <option>FTR</option>\
-    <option>F-Open</option>\
+    <option title="Target Rifle Grades" value="TR">TR</option>\
+    <option title="FTR Grades"value="FTR">FTR</option>\
+    <option title="F-Open Grade" value="FO-O">F-Open</option>\
     </select>'
-    grade = get_tr_grades()
+    grade = get_grades()
     return class_types + grade
 }
 
 //TODO: When selecting a shooter name, get their current grade in the current comp and set that is the default option if available
-function get_tr_grades(){
-    grade = '<select title="Select Shooter Grade" id="grades">'
+function get_grades(){
+    let tr_grade = '<select title="Select Shooter Grade" id="tr_grades">'
     for (let i = 0; i < classes.length; i++){
         if (classes[i][0].startsWith('TR-')){
-            grade = grade.concat('', '<option title="' + classes[i][1] + '" value="' + classes[i][0] + '">' + classes[i][0] + '</option>')
+            tr_grade = tr_grade.concat('', '<option title="' + classes[i][1] + '" value="' + classes[i][0] + '">' + classes[i][0] + '</option>')
         }   
     }
-    grade = grade.concat('', '</select>')
-    return grade
+    tr_grade = tr_grade.concat('', '</select>')
+    let ftr_grade = '<select title="Select Shooter Grade" id="ftr_grades" style="visibility: hidden">'
+    for (let i = 0; i < classes.length; i++){
+        if (classes[i][0].startsWith('FTR-')){
+            ftr_grade = ftr_grade.concat('', '<option title="' + classes[i][1] + '" value="' + classes[i][0] + '">' + classes[i][0] + '</option>')
+        }
+    }
+    ftr_grade = ftr_grade.concat('', '</select>')
+    return tr_grade + ftr_grade
+
 }
 
 //Define the options for shot values. TODO: Switch case for 6 & V enabling when changing shooter class type between TR and F-Class
@@ -185,9 +201,9 @@ function render_shots(new_row_id = 1){
 }
 
 function toDateInputValue(dateObject){
-    const local = new Date(dateObject);
-    local.setMinutes(dateObject.getMinutes() - dateObject.getTimezoneOffset());
-    return local.toJSON().slice(0,10);
+    const local = new Date(dateObject)
+    local.setMinutes(dateObject.getMinutes() - dateObject.getTimezoneOffset())
+    return local.toJSON().slice(0,10)
 }
 
 //Update score total on changes to the rows score selects or sighters
@@ -199,8 +215,8 @@ function update_score_total(row_id){
         total_score = parseFloat(total_score) + parseFloat(shot_value)
     }
     score_element = document.getElementById('score_' + row_id)
-    score_element.value = total_score.toFixed(2)
-    score_element.innerHTML = total_score.toFixed(2)
+    score_element.value = total_score.toFixed(3)
+    score_element.innerHTML = total_score.toFixed(3) //TODO: Remove zeros after the decimal point
 }
 
 //Handles changes to sighter select state
@@ -244,7 +260,7 @@ function update_to_fclass(row_id){
     }
     let type_select = document.getElementById('type_class_' + row_id)
     type_select.onchange = function () {update_to_tr(row_id)}
-    document.getElementById('grades').style.visibility = 'hidden'
+    show_grades(row_id)
 }
 
 //TODO: Change any X or 6 score values back to V, otherwise over total scores can be entered
@@ -257,5 +273,21 @@ function update_to_tr(row_id){
     }
     let type_select = document.getElementById('type_class_' + row_id)
     type_select.onchange = function () {update_to_fclass(row_id)}
-    document.getElementById('grades').style.visibility = 'visible'
+    show_grades(row_id)
+}
+
+function show_grades(row_id){
+    current_class = document.getElementById('type_class_' + row_id).value
+    if (current_class == 'TR'){
+        document.getElementById('tr_grades').style.visibility = 'visible'
+        document.getElementById('ftr_grades').style.visibility = 'hidden'
+
+    } else{
+        document.getElementById('tr_grades').style.visibility = 'hidden'
+        if (current_class == 'FTR'){
+            document.getElementById('ftr_grades').style.visibility = 'visible'
+        } else{
+            document.getElementById('ftr_grades').style.visibility = 'hidden'
+        }
+    }
 }

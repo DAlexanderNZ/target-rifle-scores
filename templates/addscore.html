@@ -20,7 +20,7 @@
             <tr>
                 <!-- Select competition from options in database or create new comptition-->
                 <td>
-                    <select  id="competition_select" title="Select relevent competition" onchange="update_matches()">
+                    <select  id="competition_select" title="Select relevent competition" name="competition" onchange="update_matches()">
                         {% for comp in competitions %}
                         <option value=" {{ comp[0] }} "> {{ comp[0] }} </option>
                         {% endfor %}
@@ -29,7 +29,7 @@
                 </td>
                 <!-- Select a match from the competition or create a new match-->
                 <td>
-                    <select id="match_select" title="Select match in competition">
+                    <select id="match_select" title="Select match in competition" onchange="update_distance()">
                         <!-- <option value="new_match">New Match</option> -->
                     </select>
                 </td>
@@ -38,18 +38,21 @@
                     <h3 id="distance"></h3>
                 </td>
                 <td id="match_date">
-                    <input type="date" name="date" id="date_picker" title="Select date of match and scores" value="" required>
+                    <input type="date" name="match_date" id="date_picker" title="Select date of match and scores" value="" required>
                 </td>
             </tr>
         </table>
-        <p id="competition_description">Please pick a competition to start</p>
+        <p id="match_description"></p>
         <table id="score_input">
             <tr>
                 <th></th>
                 <th>Name</th>
                 <th>Class & Grade</th>
                 <!-- TODO: Add help popup button -->
-                <th>Shots</th>
+                <th>
+                    Shots
+                    <span data-toggle="tooltip" data-placement="top" title="Number of shots fired in match">?</span>
+                </th>
                 <th>Total Score</th>
             </tr>
             <!-- Table rows are created dynamically using JavaScript -->

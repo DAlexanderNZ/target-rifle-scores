@@ -41,9 +41,10 @@ def get_matches(conn, competition):
     try:
         with conn.cursor() as cur:
             query = """
-            SELECT match.match_id, match.match_name, match.match_distance, match.match_counters, match.description
+            SELECT match.match_id, match.match_name, match.match_distance, match.match_counters, match_type.match_sighters, match.description
             FROM competition_match
             INNER JOIN match ON competition_match.match_id = match.match_id
+            INNER JOIN match_type ON (match.match_distance, match.match_counters) = (match_type.match_distance, match_type.match_counters)
             WHERE competition_match.competition = %s
             """
             cur.execute(query, (competition,))
@@ -185,8 +186,8 @@ def default_info(conn):
         { 'class': 'TR-C', 'score_type':  'V', 'name': 'Target Rifle C Grade'},
         { 'class': 'TR-T', 'score_type':  'V', 'name': 'Target Rifle Tyro Grade'},
         { 'class': 'FO-O', 'score_type':  'X', 'name': 'F Open'},
-        { 'class': 'FTR-C', 'score_type':  'X', 'name': 'FTR Classic'},
         { 'class': 'FTR-O', 'score_type':  'X', 'name': 'FTR'},
+        { 'class': 'FTR-C', 'score_type':  'X', 'name': 'FTR Classic'},
         { 'class': 'FPR-O', 'score_type':  'X', 'name': 'FPR (Precision Rifle)'}
     )
     with  conn.cursor() as cur:
