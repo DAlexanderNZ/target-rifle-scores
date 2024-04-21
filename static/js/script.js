@@ -13,7 +13,7 @@ function json_data(data){
 
 //Define and render rows and contents for the table
 let row_id = 0
-const score_input_table = document.getElementById('score_input')
+let score_input_table = document.getElementById('score_input')
 //increment row_id to allow for unique row ids and existing_rows to existing rows in the table
 //TODO: Autocompletion suggestions of name from DB after 4 or more chars are entered. To help ensure correct entry and cut down on typo errors.
 function add_row(){
@@ -25,7 +25,7 @@ function add_row(){
         <td><input type="text" name="name" title="Shooter Name" required></td>\
         <td>' + get_class_types(row_id) + '</td>\
         <td id="shots_input_' + row_id + '"></td>\
-        <td><span type="float" step="0.01" name="score" id="score_' + row_id + '" required></span></td>'
+        <td><span type="float" step="0.01" id="score_' + row_id + '" required></span><input type="hidden" id="score_' + row_id + '_input"  name="score"></td>'
     new_row.innerHTML = html
     score_input_table.appendChild(new_row)
     render_shots(row_id)
@@ -79,9 +79,9 @@ function get_competition_matches(){
         match_select.options.length = 0 //Clear existing options
         for (let i = 0; i < matches.length; i++){
             let match_option = document.createElement('option')
-            match_option.id = matches[i][1]
-            match_option.value = matches[i][2]
-            match_option.textContent = matches[i][1]
+            match_option.id = matches[i][2] //Distance
+            match_option.value = matches[i][0] //match_id
+            match_option.textContent = matches[i][1] //match_name
             match_select.append(match_option)
         }
         update_distance() //Update the distance to the selected match       
@@ -102,7 +102,8 @@ function update_match_descriptions(){
 
 //TODO: Also update shots selects with sighters and counters (matches[i][4], matches[i][3])
 function update_distance(){
-    let match_distance = document.getElementById('match_select').value
+    let match_distance = document.getElementById('match_select')
+    match_distance = match_distance[match_distance.selectedIndex].id //Get id of selected option
     let distance = document.getElementById('distance')
     distance.value = match_distance
     distance.textContent = match_distance
@@ -122,7 +123,7 @@ function get_class_types(row_id){
 
 //TODO: When selecting a shooter name, get their current grade in the current comp and set that is the default option if available
 function get_grades(){
-    let tr_grade = '<select title="Select Shooter Grade" id="tr_grades">'
+    let tr_grade = '<select title="Select Shooter Grade" id="tr_grades" name="class_type">'
     for (let i = 0; i < classes.length; i++){
         if (classes[i][0].startsWith('TR-')){
             tr_grade = tr_grade.concat('', '<option title="' + classes[i][1] + '" value="' + classes[i][0] + '">' + classes[i][0] + '</option>')
@@ -147,6 +148,7 @@ function add_shot(new_row_id, position){
     console.log("create_shot row " + new_row_id)
     let select_shot = document.createElement('select')
     select_shot.id = "row_" + new_row_id +"_shot_" + position
+    select_shot.name = "shots"
     select_shot.title = "Select Shot Score"
     select_shot.onchange = function () {update_score_total(new_row_id)}
     // X & 6 and V are exclusive depending on the shooter being TR or F-Class
@@ -182,6 +184,7 @@ function add_sighter_option(new_row_id, position){
     let sighter_option = document.createElement('input')
     sighter_option.type = "checkbox"
     sighter_option.id = "row_" + new_row_id + "_sighter_" + position
+    sighter_option.name = "shot_type"
     sighter_option.title = "Sighter"
     sighter_option.onchange = function () {update_to_counter(new_row_id, position)}
     shots_input.appendChild(sighter_option)
@@ -214,9 +217,10 @@ function update_score_total(row_id){
         let shot_value = document.getElementById('row_' + row_id + '_shot_' + i).value
         total_score = parseFloat(total_score) + parseFloat(shot_value)
     }
-    score_element = document.getElementById('score_' + row_id)
-    score_element.value = total_score.toFixed(3)
-    score_element.innerHTML = total_score.toFixed(3) //TODO: Remove zeros after the decimal point
+    let score_element_display = document.getElementById('score_' + row_id)
+    score_element_display.innerHTML = total_score.toFixed(3) //TODO: Remove zeros after the decimal point
+    let score_element_input = document.getElementById('score_' + row_id + '_input')
+    score_element_input.value = total_score.toFixed(3)
 }
 
 //Handles changes to sighter select state
@@ -278,16 +282,18 @@ function update_to_tr(row_id){
 
 function show_grades(row_id){
     current_class = document.getElementById('type_class_' + row_id).value
+    let tr_select = document.getElementById('tr_grades')
+    let ftr_select = document.getElementById('ftr_grades')
     if (current_class == 'TR'){
-        document.getElementById('tr_grades').style.visibility = 'visible'
-        document.getElementById('ftr_grades').style.visibility = 'hidden'
+        tr_select.style.visibility = 'visible'
+        ftr_select.style.visibility = 'hidden'
 
     } else{
-        document.getElementById('tr_grades').style.visibility = 'hidden'
+        tr_select.style.visibility = 'hidden'
         if (current_class == 'FTR'){
-            document.getElementById('ftr_grades').style.visibility = 'visible'
+            ftr_select.style.visibility = 'visible'
         } else{
-            document.getElementById('ftr_grades').style.visibility = 'hidden'
+            ftr_select.style.visibility = 'hidden'
         }
     }
 }

@@ -29,7 +29,7 @@
                 </td>
                 <!-- Select a match from the competition or create a new match-->
                 <td>
-                    <select id="match_select" title="Select match in competition" onchange="update_distance()">
+                    <select id="match_select" title="Select match in competition" name="match_id" onchange="update_distance()">
                         <!-- <option value="new_match">New Match</option> -->
                     </select>
                 </td>
@@ -51,13 +51,14 @@
                 <!-- TODO: Add help popup button -->
                 <th>
                     Shots
-                    <span data-toggle="tooltip" data-placement="top" title="Number of shots fired in match">?</span>
+                    <span type="tooltip" title="Score of shots fired in match. Change the dropdown to the score for each shot. Tick boxes to not convert a sighter.">?</span>
                 </th>
                 <th>Total Score</th>
             </tr>
             <!-- Table rows are created dynamically using JavaScript -->
         </table>
         <input type="submit" value="Submit" title="Submit scores">
+        <input type="reset" value="Reset" title="Reset">
     </form>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>

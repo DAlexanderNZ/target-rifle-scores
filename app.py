@@ -46,30 +46,30 @@ def index():
 
 @app.route('/addscore', methods=['GET', 'POST'])
 def add_score():
+    #Request data from database required for the page and data validation
+    competitions = database.get_competitions(conn)
+    classes = database.get_classes(conn)
+    default_match = [{"match_sighters": 2, "match_counters": 10}]
+    
     if request.method == 'POST':
         #Handle form submission
         #TODO: get shooter ID instead of name
         shooter_id = request.form['name'].title() 
-        competition = request.form['competition']
+        competition = request.form['competition'].strip()
         match_id = request.form['match_id']
-        shots = request.form['shots']
-        shot_type = request.form['shot_type']
-        total = request.form['score']
-        class_type = request.form['class']
+        shots = request.form.getlist('shots')
+        shot_type = request.form.getlist('shot_type')
+        total = request.form.get('score')
+        class_type = request.form['class_type']
         date = request.form['match_date']
 
         #Validate form data
-        classes = database.get_classes(conn)
 
         score = [shooter_id, competition, match_id, shots, shot_type, total, class_type, date]
         #Store data
         print(score)
-        database.record_score(score, conn)
+        #database.record_score(score, conn)
         
-    if request.method == 'GET':
-        competitions = database.get_competitions(conn)
-        classes = database.get_classes(conn)
-        default_match = [{"match_sighters": 2, "match_counters": 10}]
     return render_template('addscore.html', competitions=competitions, classes=classes, match_type=default_match)
 
 @app.route('/getmatches', methods=['POST'])

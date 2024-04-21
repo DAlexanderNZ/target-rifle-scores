@@ -50,7 +50,7 @@ th {
     background-color: f2f2f2;
 }
 
-span[data-toggle='tooltip'] {
+.tooltip {
     margin-left: .25em;
 }
 
