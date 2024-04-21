@@ -65,7 +65,7 @@ def get_classes(conn):
     except (Exception, psycopg.DatabaseError) as error:
         print(f'get_classes: {error}')
         return None
-    
+
 def create_tables(conn):
     """ Create tables in the PostgreSQL database """
     commands = (
@@ -172,12 +172,11 @@ def create_tables(conn):
         with conn.cursor() as cur:
             print(f'Creating tables in database')
             for command in commands:
-                #print(f'Executing {command}')  
                 cur.execute(command)
         conn.commit()
     except (Exception, psycopg.DatabaseError) as error:
         print(f'create_tables: {error}')
-    
+
 def default_info(conn):
     """ Create the default inforamtion for the database. Based on NRANZ classes and match types """
     classes = (

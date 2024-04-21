@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, Response
 import database
 import psycopg
-import itertools
 import json
 
 app = Flask(__name__)
@@ -50,7 +49,7 @@ def add_score():
     competitions = database.get_competitions(conn)
     classes = database.get_classes(conn)
     default_match = [{"match_sighters": 2, "match_counters": 10}]
-    
+
     if request.method == 'POST':
         #Handle form submission
         #TODO: get shooter ID instead of name
@@ -69,7 +68,7 @@ def add_score():
         #Store data
         print(score)
         #database.record_score(score, conn)
-        
+
     return render_template('addscore.html', competitions=competitions, classes=classes, match_type=default_match)
 
 @app.route('/getmatches', methods=['POST'])
@@ -88,6 +87,9 @@ def add_competition():
         match_id = request.form['match_id']
         match_name = request.form['match_name']
         match_description = request.form['match_description']
+
+        comp = [competition, description, match_id, match_name, match_description]
+        print(comp) #TODO: store data
 
 
 if __name__ == '__main__':

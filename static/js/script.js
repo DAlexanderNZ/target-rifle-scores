@@ -52,7 +52,7 @@ function remove_row(removal_row_id){
         console.log("Remove row " +  removal_row_id + ' new_row_' + removal_row_id)
         document.getElementById('new_row_' + removal_row_id).remove()
         //TODO: Fix this logic to check all rows in table and ➕ to last row if none found or if extra
-        if (removal_row_id == row_id){
+        if (removal_row_id === row_id){
             let last_row = document.getElementById('row_add_button_' + (row_id - 1))
             last_row.innerHTML = "➕"
             last_row.setAttribute('onclick', 'add_row()')
@@ -212,7 +212,7 @@ function toDateInputValue(dateObject){
 //Update score total on changes to the rows score selects or sighters
 let unconverted_sighters = 0
 function update_score_total(row_id){
-    total_score = 0
+    let total_score = 0
     for (let i = 0 + unconverted_sighters; i < (match_type[0]["match_counters"] + unconverted_sighters); i++){
         let shot_value = document.getElementById('row_' + row_id + '_shot_' + i).value
         total_score = parseFloat(total_score) + parseFloat(shot_value)
@@ -281,16 +281,16 @@ function update_to_tr(row_id){
 }
 
 function show_grades(row_id){
-    current_class = document.getElementById('type_class_' + row_id).value
+    let current_class = document.getElementById('type_class_' + row_id).value
     let tr_select = document.getElementById('tr_grades')
     let ftr_select = document.getElementById('ftr_grades')
-    if (current_class == 'TR'){
+    if (current_class === 'TR'){
         tr_select.style.visibility = 'visible'
         ftr_select.style.visibility = 'hidden'
 
     } else{
         tr_select.style.visibility = 'hidden'
-        if (current_class == 'FTR'){
+        if (current_class === 'FTR'){
             ftr_select.style.visibility = 'visible'
         } else{
             ftr_select.style.visibility = 'hidden'
