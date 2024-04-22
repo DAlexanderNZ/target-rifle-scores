@@ -66,6 +66,23 @@ def get_classes(conn):
         print(f'get_classes: {error}')
         return None
 
+def get_name_suggestions(conn, name):
+    """ Get a list of name suggestions from the shooter table """
+    try:
+        with conn.cursor() as cur:
+            query = """
+            SELECT shooter_id, shooter_first_name, shooter_last_name 
+            FROM shooter
+            WHERE shooter_first_name ILIKE %s OR shooter_last_name ILIKE %s
+            """
+            cur.execute(query, (name, name))
+            suggestions = cur.fetchall()
+            if not suggestions:
+                suggestions = "No user by that name found"
+            return suggestions
+    except (Exception, psycopg.DatabaseError) as error:
+        print(f'get_name_suggestions: {error}')
+
 def create_tables(conn):
     """ Create tables in the PostgreSQL database """
     commands = (

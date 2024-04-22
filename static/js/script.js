@@ -1,5 +1,4 @@
 //Load first row on page load
-
 document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('date_picker').value = toDateInputValue(new Date())
     get_competition_matches()
@@ -22,13 +21,14 @@ function add_row(){
     let new_row = document.createElement('tr')
     new_row.id = "new_row_" + row_id
     let html = '<td title="Add another shooter" id="button_' + row_id + '"><button type="button" onclick="add_row()" id="row_add_button_' + row_id + '">➕</button></td>\
-        <td><input type="text" name="name" title="Shooter Name" required></td>\
+        <td><input type="text" id="name_' + row_id + '" name="name" title="Shooter Name" required></td>\
         <td>' + get_class_types(row_id) + '</td>\
         <td id="shots_input_' + row_id + '"></td>\
         <td><span type="float" step="0.01" id="score_' + row_id + '" required></span><input type="hidden" id="score_' + row_id + '_input"  name="score"></td>'
     new_row.innerHTML = html
     score_input_table.appendChild(new_row)
     render_shots(row_id)
+    update_score_total(row_id)
     if (row_id > 1) {
         //Change previous ➕ to ➖
         let last_row = document.getElementById('row_add_button_' + (row_id - 1))
@@ -112,25 +112,25 @@ function update_distance(){
 
 //TODO: Add Flask logic to load type_class's available from database.
 function get_class_types(row_id){
-    class_types = '<select title="Select Shooter Class" id="type_class_' + row_id + '" onchange="update_to_fclass(' + row_id + ')">\
+    class_types = '<select title="Select Shooter Class" id="type_class_' + row_id + '" onchange="update_class_type_select(' + row_id + ')">\
     <option title="Target Rifle Grades" value="TR">TR</option>\
     <option title="FTR Grades"value="FTR">FTR</option>\
     <option title="F-Open Grade" value="FO-O">F-Open</option>\
     </select>'
-    grade = get_grades()
+    grade = get_grades(row_id)
     return class_types + grade
 }
 
 //TODO: When selecting a shooter name, get their current grade in the current comp and set that is the default option if available
-function get_grades(){
-    let tr_grade = '<select title="Select Shooter Grade" id="tr_grades" name="class_type">'
+function get_grades(row_id){
+    let tr_grade = '<select title="Select Shooter Grade" id="tr_grades_' + row_id + '" name="class_type">'
     for (let i = 0; i < classes.length; i++){
         if (classes[i][0].startsWith('TR-')){
             tr_grade = tr_grade.concat('', '<option title="' + classes[i][1] + '" value="' + classes[i][0] + '">' + classes[i][0] + '</option>')
         }   
     }
     tr_grade = tr_grade.concat('', '</select>')
-    let ftr_grade = '<select title="Select Shooter Grade" id="ftr_grades" style="visibility: hidden">'
+    let ftr_grade = '<select title="Select Shooter Grade" id="ftr_grades_' + row_id + '" style="visibility: hidden">'
     for (let i = 0; i < classes.length; i++){
         if (classes[i][0].startsWith('FTR-')){
             ftr_grade = ftr_grade.concat('', '<option title="' + classes[i][1] + '" value="' + classes[i][0] + '">' + classes[i][0] + '</option>')
@@ -240,6 +240,7 @@ function update_to_counter(row_id, position){
     let sighter_value = document.getElementById('row_' + row_id + '_sighter_' + position)
     sighter_value.onchange = function () {update_to_sighter(row_id, position)}
     
+    update_class_type_select(row_id) //Ensure that score selects have correct options enabled
     update_score_total(row_id)
 }
 
@@ -251,10 +252,23 @@ function update_to_sighter(row_id, position){
     sighter_value.onchange = function () {update_to_counter(row_id, position)}
     
     unconverted_sighters--
+    update_class_type_select(row_id) //Ensure that score selects have correct options enabled
     update_score_total(row_id)
 }
 
-//Shooter class type change handling
+//Shooter class type change handling and grade selection
+//Checks the selected class, currently only works with NRA fullbore classes. 
+//TODO: Generalize function to allow for different class types. E.g ISSF 300m classes
+function update_class_type_select(row_id){
+    let type_select = document.getElementById('type_class_' + row_id)
+    if (type_select.value === 'TR'){
+        update_to_tr(row_id)
+    } else  {
+        update_to_fclass(row_id)
+    }
+    show_grades(row_id)
+}
+
 function update_to_fclass(row_id){
     console.log("Update to F-Class")
     for (let i = 0; i < document.getElementById('shots_input_' + row_id).childElementCount - 2; i++){
@@ -262,9 +276,6 @@ function update_to_fclass(row_id){
         document.getElementById('6_' + row_id + i).removeAttribute('disabled', 'disabled')
         document.getElementById('V_' + row_id + i).setAttribute('disabled', 'disabled')
     }
-    let type_select = document.getElementById('type_class_' + row_id)
-    type_select.onchange = function () {update_to_tr(row_id)}
-    show_grades(row_id)
 }
 
 //TODO: Change any X or 6 score values back to V, otherwise over total scores can be entered
@@ -275,25 +286,30 @@ function update_to_tr(row_id){
         document.getElementById('6_' + row_id + i).setAttribute('disabled', 'disabled')
         document.getElementById('V_' + row_id + i).removeAttribute('disabled', 'disabled')
     }
-    let type_select = document.getElementById('type_class_' + row_id)
-    type_select.onchange = function () {update_to_fclass(row_id)}
-    show_grades(row_id)
 }
 
+//TODO: Filter shown grades by grades defined on a competition basis. E.g. Often there is no TR-T entry or one class isn't run in the comp
 function show_grades(row_id){
     let current_class = document.getElementById('type_class_' + row_id).value
-    let tr_select = document.getElementById('tr_grades')
-    let ftr_select = document.getElementById('ftr_grades')
+    current_class.name = 'hidden'
+    let tr_select = document.getElementById('tr_grades_' + row_id)
+    let ftr_select = document.getElementById('ftr_grades_' + row_id)
     if (current_class === 'TR'){
         tr_select.style.visibility = 'visible'
+        tr_select.name = 'class_type'
         ftr_select.style.visibility = 'hidden'
-
-    } else{
+        ftr_select.name = 'hidden'
+    } else {
         tr_select.style.visibility = 'hidden'
+        tr_select.name = 'hidden'
         if (current_class === 'FTR'){
             ftr_select.style.visibility = 'visible'
+            ftr_select.name = 'class_type'
         } else{
             ftr_select.style.visibility = 'hidden'
         }
     }
+    if (current_class === 'FO-O'){
+            current_class.name = 'class_type'
+        }
 }

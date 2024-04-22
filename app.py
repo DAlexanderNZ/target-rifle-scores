@@ -78,6 +78,12 @@ def get_matches():
     matches = database.get_matches(conn, competition)
     return Response(json.dumps(matches), mimetype='application/json')
 
+@app.route('/getnamesuggestion', methods=['POST'])
+def get_name_suggestion():
+    names = request.json['name'].strip()
+    database.get_name_suggestions(conn, names)
+    return Response(json.dumps(names), mimetype='application/json')
+
 @app.route('/addcompetition', methods=['GET', 'POST'])
 def add_competition():
     if request.method == 'POST':
