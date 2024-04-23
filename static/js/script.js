@@ -141,6 +141,19 @@ function get_grades(row_id){
 
 }
 
+//Render the number of shots required to score the match
+function render_shots(new_row_id = 1){
+    let number_of_shots = match_type[0]["match_counters"]
+    console.log("Render shots for row " + new_row_id + " with " + number_of_shots + " shots")
+    for (let i = 0; i < number_of_shots; i++) {
+        add_shot(new_row_id, i)
+        //Add sighters specified in match type details
+        if (i < match_type[0]['match_sighters']){
+            add_sighter_option(new_row_id, i)
+        }
+    }
+}
+
 //Define the options for shot values. TODO: Switch case for 6 & V enabling when changing shooter class type between TR and F-Class
 let shots_input = document.getElementById('shots_input_')
 function add_shot(new_row_id, position){
@@ -166,19 +179,6 @@ function add_shot(new_row_id, position){
     shots_input.appendChild(select_shot)
 }
 
-
-//Sighter as select
-/*function  add_sighter_option(new_row_id, position){
-    let sighter_option = document.createElement('select')
-    sighter_option.id = "row_" + new_row_id + "_sighter_" + position
-    sighter_option.onchange = function () {update_to_counter(new_row_id, position)}
-    let html = '\
-        <option value="counter" id="counter">C</option>\
-        <option  value="sighter" id= "sighter">S</option>'
-    sighter_option.innerHTML = html
-    shots_input.appendChild(sighter_option)
-}*/
-
 //Sighter as checkbox
 function add_sighter_option(new_row_id, position){
     let sighter_option = document.createElement('input')
@@ -190,32 +190,33 @@ function add_sighter_option(new_row_id, position){
     shots_input.appendChild(sighter_option)
 }
 
-//Render the number of shots required to score the match
-function render_shots(new_row_id = 1){
-    let number_of_shots = match_type[0]["match_counters"]
-    console.log("Render shots for row " + new_row_id + " with " + number_of_shots + " shots")
-    for (let i = 0; i < number_of_shots; i++) {
-        add_shot(new_row_id, i)
-        //Add sighters specified in match type details
-        if (i < match_type[0]['match_sighters']){
-            add_sighter_option(new_row_id, i)
+//Start of enforcing rule on sighter converting
+function apply_checkbox_state(row_id, position, is_checked){
+    let sighter_checkboxs =  document.querySelectorAll('#shots_input_' + row_id + ' input[type="checkbox"]')
+    if  (is_checked){
+        //Check previous checkboxes
+        for (let i = 0; i < position; i++){
+            sighter_checkboxs[i].checked = true
+        }
+    } else  {
+        //Uncheck following checkboxes
+        for (let i = position; i < sighter_checkboxs.length; i++){
+            sighter_checkboxs[i].checked = false
         }
     }
 }
-
-function toDateInputValue(dateObject){
-    const local = new Date(dateObject)
-    local.setMinutes(dateObject.getMinutes() - dateObject.getTimezoneOffset())
-    return local.toJSON().slice(0,10)
-}
-
 //Update score total on changes to the rows score selects or sighters
 let unconverted_sighters = 0
 function update_score_total(row_id){
     let total_score = 0
     for (let i = 0 + unconverted_sighters; i < (match_type[0]["match_counters"] + unconverted_sighters); i++){
-        let shot_value = document.getElementById('row_' + row_id + '_shot_' + i).value
-        total_score = parseFloat(total_score) + parseFloat(shot_value)
+        let shotElement = document.getElementById('row_' + row_id + '_shot_' + i);
+        if (shotElement) {
+            let shot_value = shotElement.value
+            total_score += parseFloat(shot_value)
+        } else {
+            console.error('Shot element not found for id: row_' + row_id + '_shot_' + i)
+        }
     }
     let score_element_display = document.getElementById('score_' + row_id)
     score_element_display.innerHTML = total_score.toFixed(3) //TODO: Remove zeros after the decimal point
@@ -226,17 +227,10 @@ function update_score_total(row_id){
 //Handles changes to sighter select state
 //TODO: Enforce rule that first sigher can only be converted with the second sighter
 function update_to_counter(row_id, position){
+    let sighter_checkboxs =  document.querySelectorAll('#shots_input_' + row_id + ' input[type="checkbox"]')
     let new_shot_pos = document.getElementById('shots_input_' + row_id).childElementCount - 2
     add_shot(row_id, new_shot_pos)
     unconverted_sighters++
-    //Incorrect first at enforcing sighter rule
-    /*if (position == match_type[0]['match_sighters'] - 1){
-        new_shot_pos = document.getElementById('shots_input_' + row_id).childElementCount - 2
-        add_shot(row_id, new_shot_pos)
-        let sighter_value = document.getElementById('row_' + row_id + '_sighter_' + position - 1)
-        sighter_value.checked
-        sighter_value.onchange = function () {update_to_sighter(row_id, position)}
-    }*/
     let sighter_value = document.getElementById('row_' + row_id + '_sighter_' + position)
     sighter_value.onchange = function () {update_to_sighter(row_id, position)}
     
@@ -270,7 +264,7 @@ function update_class_type_select(row_id){
 }
 
 function update_to_fclass(row_id){
-    console.log("Update to F-Class")
+    //console.log("Update to F-Class")
     for (let i = 0; i < document.getElementById('shots_input_' + row_id).childElementCount - 2; i++){
         document.getElementById('X_' + row_id + i).removeAttribute('disabled', 'disabled')
         document.getElementById('6_' + row_id + i).removeAttribute('disabled', 'disabled')
@@ -280,7 +274,7 @@ function update_to_fclass(row_id){
 
 //TODO: Change any X or 6 score values back to V, otherwise over total scores can be entered
 function update_to_tr(row_id){
-    console.log("Update to TR")
+    //console.log("Update to TR")
     for (let i = 0; i < document.getElementById('shots_input_' + row_id).childElementCount - 2; i++){
         document.getElementById('X_' + row_id + i).setAttribute('disabled', 'disabled')
         document.getElementById('6_' + row_id + i).setAttribute('disabled', 'disabled')
@@ -312,4 +306,10 @@ function show_grades(row_id){
     if (current_class === 'FO-O'){
             current_class.name = 'class_type'
         }
+}
+
+function toDateInputValue(dateObject){
+    const local = new Date(dateObject)
+    local.setMinutes(dateObject.getMinutes() - dateObject.getTimezoneOffset())
+    return local.toJSON().slice(0,10)
 }
