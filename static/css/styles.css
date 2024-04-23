@@ -1,7 +1,5 @@
 /* Global Styles */
-*,
-*::before,
-*::after {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
@@ -65,6 +63,44 @@ select, .shot, .sighter {
 select:focus, .shot:focus, .sighter:focus {
   border-color: #0275d8;
   outline: none;
+}
+
+/* Suggestion Box Styles */
+.suggestion-box {
+    position: absolute;
+    background-color: #ffffff;
+    border: 1px solid #dddddd;
+    border-top: none;
+    z-index: 1000;
+    width: fit-content;
+    /* Adjust width to fit content */
+    min-width: 100%;
+    /* Ensure it's not smaller than the input field */
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+    font-family: 'Arial', sans-serif;
+    /* Match the body font */
+}
+
+.suggestion-box div {
+    padding: 10px;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    /* Prevent text wrapping */
+}
+
+.suggestion-box div:hover {
+    background-color: #f6f6f6;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .suggestion-box {
+        width: 100%;
+        /* Full width on smaller screens */
+    }
 }
 
 /* Utility Classes */

@@ -75,13 +75,30 @@ def get_name_suggestions(conn, name):
             FROM shooter
             WHERE shooter_first_name ILIKE %s OR shooter_last_name ILIKE %s
             """
-            cur.execute(query, (name, name))
+            #Add '%' wildcard characters around the name for partial matching  
+            name_pattern = '%' + name + '%'          
+            cur.execute(query, (name_pattern, name_pattern))
             suggestions = cur.fetchall()
             if not suggestions:
-                suggestions = "No user by that name found"
+                suggestions = [(0, "No user by that name found",  "")]
             return suggestions
     except (Exception, psycopg.DatabaseError) as error:
         print(f'get_name_suggestions: {error}')
+
+def record_score(score, conn):
+    """
+    Record scores for shooters in a match
+    :param score: a dictionary of score attributes [shooter_id, competition, match_id, shots, shot_type, total, class, date]
+    :param conn: a connection to the database
+    """
+    with conn.cursor() as cur:
+        query = "INSERT INTO score (shooter_id, competition, match_id, shots, shot_type, total, class, date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
+        cur.execute(query, score)
+    conn.commit()
+
+#
+#   First time database setup
+#
 
 def create_tables(conn):
     """ Create tables in the PostgreSQL database """
@@ -169,7 +186,7 @@ def create_tables(conn):
             competition VARCHAR,
             match_id INT,
             shots CHAR(1)[],
-            shot_type CHAR(1)[],
+            shot_type BOOLEAN[],
             total REAL,
             class VARCHAR,
             date DATE,
@@ -251,19 +268,6 @@ def create_shooter(shooter,  conn):
                             (shooter['shooter_nra_id'], shooter['shooter_first_name'], shooter['shooter_last_name'], shooter['shooter_dob']))
     except (Exception, psycopg.DatabaseError) as error:
         print(f'create_shooter: {error}')
-
-def record_score(score, conn):
-    """
-    Record scores for shooters in a match
-    :param score: a dictionary of score attributes [shooter_id, competition, match_id, shots, shot_type, total, class, date]
-    :param conn: a connection to the database
-    """
-    with conn.cursor() as cur:
-        query = "INSERT INTO score (shooter_id, competition, match_id, shots, shot_type, total, class, date) VALUES (%(shooter_id)s, %(competition)s, %(match_id)s, %(shots)s, %(shot_type)s, %(total)s %(class)s, %(date)s);"
-        cur.execute(query, score)
-    conn.commit()
-
-
 #Database setup
 #config = load_config()
 #conn = psycopg.connect(**config)

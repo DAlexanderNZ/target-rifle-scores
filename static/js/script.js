@@ -10,6 +10,9 @@ function json_data(data){
     return JSON.parse(data)
 }
 
+
+//Page generation and setup:
+
 //Define and render rows and contents for the table
 let row_id = 0
 let score_input_table = document.getElementById('score_input')
@@ -21,7 +24,9 @@ function add_row(){
     let new_row = document.createElement('tr')
     new_row.id = "new_row_" + row_id
     let html = '<td title="Add another shooter" id="button_' + row_id + '"><button type="button" onclick="add_row()" id="row_add_button_' + row_id + '">➕</button></td>\
-        <td><input type="text" id="name_' + row_id + '" name="name" title="Shooter Name" required></td>\
+        <td><input type="text" id="shooter_name_' + row_id + '" title="Shooter Name" required>\
+        <div id="suggestion_box_' + row_id +'" class="suggestion_box"></div></td>\
+        <input type="hidden" id="suggestion_box_' + row_id + '_input" name="name">\
         <td>' + get_class_types(row_id) + '</td>\
         <td id="shots_input_' + row_id + '"></td>\
         <td><span type="float" step="0.01" id="score_' + row_id + '" required></span><input type="hidden" id="score_' + row_id + '_input"  name="score"></td>'
@@ -40,10 +45,11 @@ function add_row(){
         remove_button.id = 'remove_row_button_' + row_id
         remove_button.innerHTML = '<button type="button" onclick="remove_row(' + row_id +')">➖</button>'
         current_row_buttons.appendChild(remove_button)
-        }
-        //Remove added ➖ from second to last row
-        document.getElementById('remove_row_button_' + (row_id - 1)).remove()
     }
+    //Remove added ➖ from second to last row
+    shooter_name_suggestions(row_id)
+    document.getElementById('remove_row_button_' + (row_id - 1)).remove()
+}
 
 //Allow for selected row to be removed. TODO: Check if user has input in the row and confirm choice.
 function remove_row(removal_row_id){
@@ -61,6 +67,44 @@ function remove_row(removal_row_id){
        alert('You cannot delete the last row of the table')
     }
 }
+
+//Event listener for shooter name suggestion box
+function shooter_name_suggestions(row_id){
+    console.log("Add event listener for row " + row_id)
+    let name_input = document.getElementById('shooter_name_' + row_id)
+    let name_input_hidden = document.getElementById('suggestion_box_' + row_id + '_input')
+    name_input.addEventListener('keyup', function(){
+        let partial_name = name_input.value
+        if (partial_name.length > 3) {
+            fetch("/getnamesuggestion", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: partial_name})
+            })
+            .then(response => response.json())
+            .then(suggestions => {
+                let suggestion_box = document.getElementById('suggestion_box_' + row_id)
+                suggestion_box.innerHTML = ''
+                for (let i = 0; i < suggestions.length; i++){
+                    let suggestion_element = document.createElement('div')
+                    suggestion_element.textContent = suggestions[i][1] + ' ' +  suggestions[i][2] //shooter_first_name + shooter_last_name
+                    suggestion_element.value = suggestions[i][0] //shooter_id
+                    suggestion_element.addEventListener('click', function(){
+                        name_input.value = suggestion_element.textContent
+                        name_input_hidden.value = suggestion_element.value
+                        suggestion_box.innerHTML = ''
+                    })
+                    suggestion_box.appendChild(suggestion_element)
+                }
+
+            })
+            .catch(error => console.error('Error:', error))
+        } else {
+            document.getElementById('suggestion_box_' + row_id).innerHTML = ''
+        }
+    })
+}
+
 
 let matches
 function get_competition_matches(){

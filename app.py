@@ -67,22 +67,23 @@ def add_score():
         score = [shooter_id, competition, match_id, shots, shot_type, total, class_type, date]
         #Store data
         print(score)
-        #database.record_score(score, conn)
+        database.record_score(score, conn)
 
     return render_template('addscore.html', competitions=competitions, classes=classes, match_type=default_match)
 
 @app.route('/getmatches', methods=['POST'])
 def get_matches():
     competition = request.json['competition'].strip()
-    print(competition)
     matches = database.get_matches(conn, competition)
     return Response(json.dumps(matches), mimetype='application/json')
 
 @app.route('/getnamesuggestion', methods=['POST'])
 def get_name_suggestion():
-    names = request.json['name'].strip()
-    database.get_name_suggestions(conn, names)
-    return Response(json.dumps(names), mimetype='application/json')
+    print(request.json)
+    names = request.json['name'].strip().lower()
+    suggestions = database.get_name_suggestions(conn, names)
+    print(suggestions)
+    return Response(json.dumps(suggestions), mimetype='application/json')
 
 @app.route('/addcompetition', methods=['GET', 'POST'])
 def add_competition():
