@@ -26,6 +26,21 @@ def connect():
     except (Exception, psycopg.DatabaseError) as error:
         print(f'Error : {error}')
 
+def get_all_scores(conn):
+    """ Get all scores from the database """
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+            SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.competition, match.match_name, score.shots, score.shot_type, score.total, score.date
+	        FROM score
+	        INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
+	        INNER JOIN match ON  score.match_id = match.match_id;
+            """)
+            scores = cur.fetchall()
+            return scores
+    except (Exception, psycopg.DatabaseError) as error:
+        print(f'get_all_scores: {error}')
+
 def get_competitions(conn, query='SELECT competition FROM competition'):
     """ Get the competitions from the database """
     try:
@@ -185,7 +200,7 @@ def create_tables(conn):
             shooter_id INT,
             competition VARCHAR,
             match_id INT,
-            shots CHAR(1)[],
+            shots VARCHAR(5)[],
             shot_type BOOLEAN[],
             total REAL,
             class VARCHAR,

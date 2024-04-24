@@ -43,6 +43,11 @@ conn = psycopg.connect(**config)
 def index():
     return render_template('index.html', results=scores, zip=zip)
 
+@app.route('/allscores')
+def all_scores():
+    scores = database.get_all_scores(conn)
+    return render_template('allscores.html', results=scores)
+
 @app.route('/addscore', methods=['GET', 'POST'])
 def add_score():
     #Request data from database required for the page and data validation
@@ -52,8 +57,7 @@ def add_score():
 
     if request.method == 'POST':
         #Handle form submission
-        #TODO: get shooter ID instead of name
-        shooter_id = request.form['name'].title() 
+        shooter_id = request.form['name']
         competition = request.form['competition'].strip()
         match_id = request.form['match_id']
         shots = request.form.getlist('shots')
