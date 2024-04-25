@@ -47,15 +47,15 @@ th {
   background-color: #f2f2f2;
 }
 
-tr:nth-child(even) {
-  background-color: #f9f9f9;
+tr:nth-child(odd) {
+  background-color: #e4e4e4;
 }
 
 /* Form Styles */
 select, .shot, .sighter {
   border: 1px solid #ccc;
   border-radius: 0.25em;
-  padding: 0.5em;
+  padding: 0.35em;
   margin-top: 0.5em;
   font-size: 1em;
 }

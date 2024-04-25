@@ -11,7 +11,22 @@
         <th>Count Out</th>
         <th>Score</th>
     </tr>
+    {% for result in results %}
     <tr>
-        
+        <td>{{ result[0] }}</td>
+        <td>{{ result[1] }}</td>
+        <td>{{ result[2] }}</td>
+        <td>{{ result[6] }}</td>
+        <td>{% for score in result[3] %}
+            <!-- Converting only one sighter not working -->
+            {% if loop.index0 < result[4]|length %}
+            <span class="sighter"><span class="converted">{{ score }}</span></span>
+            {% else %}
+            <span class="shot">{{ score }}</span> 
+            {% endif %}
+        {% endfor %} </td>
+        <td>{{ result[5] }}</td>
     </tr>       
+    {% endfor %}
 </table>
+{% endblock %}
