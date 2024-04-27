@@ -26,6 +26,16 @@ def connect():
     except (Exception, psycopg.DatabaseError) as error:
         print(f'Error : {error}')
 
+def replace_v_x(scores):
+    """ Replace 5.001 with V and 6.001 with X in the scores list when returning scores to display """
+    for score in scores:
+        for index, shot in enumerate(score[3]):
+            if shot == '5.001':
+                score[3][index] = 'V'
+            elif shot == '6.001':
+                score[3][index] = 'X'
+    return scores
+
 def get_all_scores(conn):
     """ Get all scores from the database """
     try:
@@ -37,6 +47,7 @@ def get_all_scores(conn):
 	        INNER JOIN match ON  score.match_id = match.match_id;
             """)
             scores = cur.fetchall()
+            scores = replace_v_x(scores)
             return scores
     except (Exception, psycopg.DatabaseError) as error:
         print(f'get_all_scores: {error}')

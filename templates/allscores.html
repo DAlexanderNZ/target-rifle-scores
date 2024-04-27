@@ -19,7 +19,7 @@
         <td>{{ result[6] }}</td>
         <td>{% for score in result[3] %}
             <!-- Converting only one sighter not working -->
-            {% if loop.index0 < result[4]|length %}
+            {% if (result[4]|length) > loop.index0 %}
             <span class="sighter"><span class="converted">{{ score }}</span></span>
             {% else %}
             <span class="shot">{{ score }}</span> 
