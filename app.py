@@ -67,11 +67,13 @@ def add_score():
         date = request.form['match_date']
 
         #Validate form data
-
         score = [shooter_id, competition, match_id, shots, shot_type, total, class_type, date]
         #Store data
-        print(score)
         database.record_score(score, conn)
+        #Store selected competition
+        selected_competition = competition
+    else:
+        selected_competition = ''
 
     return render_template('addscore.html', competitions=competitions, classes=classes, match_type=default_match)
 
@@ -88,12 +90,16 @@ def add_match_comp():
         match_counters = request.form['match_counters']
         match_description = request.form['match_description'].strip()
         #TODO: Check if match distance, counters and sighters match a match_type and add to match types if not. May require rethinking match_type table
+
         #Format data for submission
         new_match = [match_name, match_distance + match_distance_type, match_counters, match_description, competition]
-        print(new_match)
         database.record_new_match(new_match, conn)
+        #Store selected competition
+        selected_competition = competition
+    else:
+        selected_competition = ''
 
-    return render_template('addmatchcomp.html', competitions=competitions)
+    return render_template('addmatchcomp.html', competitions=competitions, selected_competition=selected_competition)
 
 @app.route('/getmatches', methods=['POST'])
 def get_matches():

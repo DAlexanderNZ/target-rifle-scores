@@ -22,7 +22,7 @@
                 <td>
                     <select  id="competition_select" title="Select relevent competition" name="competition" onchange="update_matches()">
                         {% for comp in competitions %}
-                        <option value=" {{ comp[0] }} "> {{ comp[0] }} </option>
+                        <option value="{{ comp[0] }}" {% if selected_competition == comp[0] %}  selected {% endif %}>{{ comp[0] }}</option>
                         {% endfor %}
                         <option value="new_competition">New Competition</option>
                     </select>
@@ -62,6 +62,17 @@
     </form>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>
+        //Store selected competition in session storage to be used when reloading page
+        window.onload = function () {
+            var selected_comp = sessionStorage.getItem("selected_comp");
+            document.getElementById("competition_select").value = selected_comp;
+        }
+
+        document.getElementById("competition_select").addEventListener("change", function () {
+            var selval = this.value;
+            if (selval == "new_competition") {return} //If new competition is selected, do nothing
+            sessionStorage.setItem("selected_comp", selval);
+        })
         const classes = json_data('{{ classes|tojson }}')
         const match_type = json_data('{{ match_type|tojson }}')
         document.getElementById('date_picker').value = toDateInputValue(new Date())
