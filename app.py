@@ -75,6 +75,26 @@ def add_score():
 
     return render_template('addscore.html', competitions=competitions, classes=classes, match_type=default_match)
 
+@app.route('/addmatchcomp', methods=['GET', 'POST'])
+def add_match_comp():
+    competitions = database.get_competitions(conn)
+    if request.method == 'POST':
+        #Handle form submission
+        competition = request.form['competition']
+        match_name = request.form['match_name'].strip()
+        match_distance = request.form['match_distance']
+        match_distance_type = request.form['match_distance_type']
+        #match_sighters = request.form['match_sighters']
+        match_counters = request.form['match_counters']
+        match_description = request.form['match_description'].strip()
+        #TODO: Check if match distance, counters and sighters match a match_type and add to match types if not. May require rethinking match_type table
+        #Format data for submission
+        new_match = [match_name, match_distance + match_distance_type, match_counters, match_description, competition]
+        print(new_match)
+        database.record_new_match(new_match, conn)
+
+    return render_template('addmatchcomp.html', competitions=competitions)
+
 @app.route('/getmatches', methods=['POST'])
 def get_matches():
     competition = request.json['competition'].strip()

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Rifle Scores | Add Matchs{% endblock %}
+{% block content %}
+<h1>Add Competition</h1>
+<p>TODO: add required form for adding new competitions</p>
+<h1>Add Matchs</h1>
+<p>
+    <ol>
+        <li>Select the competition you want to add a match too</li>
+        <li>Enter the details of the new match</li>
+    </ol>
+</p>
+<form method="post" action="{{ url_for('add_match_comp')}}">
+    <select  id="competition_select" title="Select relevent competition" name="competition" onchange="show_matchs_by_row()">
+        {% for comp in competitions %}
+        <option value="{{ comp[0] }}">{{ comp[0] }}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Submit" title="Submit scores">
+    <input type="reset" value="Reset" title="Reset">
+    <table id="matches">
+        <tr>
+            <th>Match Name</th>
+            <th>Match Type</th>
+            <th>Match Description</th>
+        </tr>
+        <!-- Row to add new match -->
+        <tr id="new_match">
+            <td><input type="text"  title="Match name" name="match_name" placeholder="Match Name"></td>
+            <td>
+                <select title="Match distance" name="match_distance">      
+                    <option value="300">300</option>
+                    <option value="500">500</option>
+                    <option value="600">600</option>
+                    <option value="700">700</option>
+                    <option value="800">800</option>
+                    <option value="900">900</option>
+                    <option value="1000">1000</option>
+                </select>
+                <select title="Distance type" name="match_distance_type">
+                    <option title="Yards" value="y" selected>Y</option>
+                    <option title="Meters" value="m">M</option>
+                </select>
+                <!--
+                <select title="Match sighters" name="match_sighters">
+                    <option value="2" selected>2</option>
+                    <option value="1">1</option>
+                    <option value="0">0</option>
+                </select>
+                -->
+                <select title="Match counters" name="match_counters">
+                    <option value="15">15</option>
+                    <option value="11">11</option>
+                    <option value="10" selected>10</option>
+                    <option value="7">7</option>
+                </select>
+            </td>
+            <td><input type="text" name="match_description" placeholder="Match Description"></td>
+        </tr>
+        <!-- Existing matchs in competition-->
+    </table>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        show_matchs_by_row()
+    </script>
+{% endblock %}

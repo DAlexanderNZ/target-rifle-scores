@@ -1,17 +1,10 @@
-//Load first row on page load
-document.addEventListener('DOMContentLoaded', function(){
-    document.getElementById('date_picker').value = toDateInputValue(new Date())
-    get_competition_matches()
-    add_row()
-})
-
 //Get data from flask passed though to js
 function json_data(data){
     return JSON.parse(data)
 }
 
 
-//Page generation and setup:
+//Add scores page generation and setup:
 
 //Define and render rows and contents for the table
 let row_id = 0
@@ -109,6 +102,7 @@ function shooter_name_suggestions(row_id){
 let matches
 function get_competition_matches(){
     let competition = document.getElementById('competition_select').value
+    console.log(competition)
     fetch("/getmatches", {
         method: "POST",
         headers: {'Content-Type': 'application/json'},
@@ -121,6 +115,7 @@ function get_competition_matches(){
         //Create options for match_select
         let match_select = document.getElementById('match_select')
         match_select.options.length = 0 //Clear existing options
+        match_select.onchange = function () {add_new_match_option()}
         for (let i = 0; i < matches.length; i++){
             let match_option = document.createElement('option')
             match_option.id = matches[i][2] //Distance
@@ -128,6 +123,12 @@ function get_competition_matches(){
             match_option.textContent = matches[i][1] //match_name
             match_select.append(match_option)
         }
+        //Create new match option
+        let new_match_option = document.createElement('option')
+        new_match_option.id = 'new_match'
+        new_match_option.value = 'new_match'
+        new_match_option.textContent = 'New Match'
+        match_select.append(new_match_option)
         update_distance() //Update the distance to the selected match       
     })
     .catch(error => console.error('Error:', error)) // Log any errors
@@ -135,6 +136,11 @@ function get_competition_matches(){
 
 function update_matches(){
     console.log("Update matches")
+    let competition = document.getElementById('competition_select').value
+    if (competition === 'new_competition'){
+        add_new_competition_option()
+        return
+    }
     get_competition_matches()
 }
 
@@ -350,6 +356,60 @@ function show_grades(row_id){
     if (current_class === 'FO-O'){
             current_class.name = 'class_type'
         }
+}
+
+function add_new_competition_option(){
+    let ask = window.confirm("Are you sure you want to add a new competition? All unsubmitted data will be lost.")
+    if (ask){
+        window.location.href = '/addmatchcomp'
+    }
+}
+
+function add_new_match_option(){
+    let match_option = document.getElementById('match_select').value
+    if (match_option === 'new_match'){
+        let ask = window.confirm("Are you sure you want to add a new match? All unsubmitted data will be lost.")
+        if (ask){
+            window.location.href = '/addmatchcomp'
+        }
+    }
+}
+
+//Add match code:
+
+//Render table rows of existing matchs in the selected comp
+function show_matchs_by_row(){
+    let competition = document.getElementById('competition_select').value
+    let matches_table = document.getElementById('matches')
+    //Clear existing matches
+    while (matches_table.rows.length > 2){
+        matches_table.deleteRow(2)
+    }
+    fetch("/getmatches", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({competition: competition})
+    })
+    .then(response => response.json()) // Convert the response to JSON
+    .then(data => {
+        matches = data // Store the data in matches
+        for (let i = 0; i < matches.length; i++){
+            let match_row = document.createElement('tr')
+            match_row.id = 'match_row_' + i
+            //Match name
+            let match_name = document.createElement('td')
+            match_name.textContent = matches[i][1]
+            //Match type
+            let match_distance = document.createElement('td')
+            match_distance.textContent = matches[i][2] + matches[i][4] + matches[i][3]
+            //Match description
+            let match_description = document.createElement('td')
+            match_description.textContent = matches[i][5]
+            match_row.append(match_name, match_distance, match_description) //Add cells to row
+            matches_table.append(match_row) //Add row to table
+        }
+
+    })
 }
 
 function toDateInputValue(dateObject){

@@ -122,6 +122,22 @@ def record_score(score, conn):
         cur.execute(query, score)
     conn.commit()
 
+def record_new_match(match, conn):
+    """
+    Record a new match in the database
+    :param match: a dictionary of match attributes [match_name, match_distance + match_distance_type, match_counters, match_description, competition]
+    :param conn: a connection to the database
+    """
+    with conn.cursor() as cur:
+        query = """
+        INSERT INTO match (match_name, match_distance, match_counters, description)  VALUES (%s, %s, %s, %s) RETURNING match_id;
+        """
+        cur.execute(query, (match[0], match[1], match[2], match[3]))
+        match_id = cur.fetchone()[0]
+        query = "INSERT INTO competition_match (competition, match_id) VALUES (%s, %s);"
+        cur.execute(query, (match[4], match_id))
+    conn.commit()
+
 #
 #   First time database setup
 #
@@ -169,7 +185,7 @@ def create_tables(conn):
         """,
         """
         CREATE TABLE IF NOT EXISTS match_type (
-            match_distance VARCHAR,
+            match_distance VARCHAR(5),
             match_counters SMALLINT,
             match_sighters SMALLINT,
             PRIMARY KEY (match_distance, match_counters)
@@ -179,7 +195,7 @@ def create_tables(conn):
         CREATE TABLE IF NOT EXISTS match (
             match_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             match_name VARCHAR,
-            match_distance VARCHAR,
+            match_distance VARCHAR(5),
             match_counters SMALLINT,
             description VARCHAR,
             CONSTRAINT match_fk FOREIGN KEY (match_distance, match_counters)
@@ -216,6 +232,7 @@ def create_tables(conn):
             total REAL,
             class VARCHAR,
             date DATE,
+            row_created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT shooter_id_fk FOREIGN KEY (shooter_id)
                 REFERENCES shooter (shooter_id)
                 ON DELETE CASCADE,
