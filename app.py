@@ -69,7 +69,7 @@ def add_score():
         #Validate form data
         score = [shooter_id, competition, match_id, shots, shot_type, total, class_type, date]
         #Store data
-        database.record_score(score, conn)
+        database.record_score(conn, score)
         #Store selected competition
         selected_competition = competition
     else:
@@ -93,13 +93,20 @@ def add_match_comp():
 
         #Format data for submission
         new_match = [match_name, match_distance + match_distance_type, match_counters, match_description, competition]
-        database.record_new_match(new_match, conn)
+        database.record_new_match(conn, new_match)
         #Store selected competition
         selected_competition = competition
     else:
         selected_competition = ''
 
     return render_template('addmatchcomp.html', competitions=competitions, selected_competition=selected_competition)
+
+@app.route('/removematch', methods=['POST'])
+def remove_match():
+    """ Removes match from database if it has no scores """
+    match_id = request.json['match_id']
+    success = database.remove_match(conn, match_id)
+    return Response(json.dumps({'success': success}), mimetype='application/json')
 
 @app.route('/getmatches', methods=['POST'])
 def get_matches():

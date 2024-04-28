@@ -17,7 +17,7 @@ function add_row(){
     let new_row = document.createElement('tr')
     new_row.id = "new_row_" + row_id
     let html = '<td title="Add another shooter" id="button_' + row_id + '"><button type="button" onclick="add_row()" id="row_add_button_' + row_id + '">➕</button></td>\
-        <td><input type="text" id="shooter_name_' + row_id + '" title="Shooter Name" required>\
+        <td><input type="text" id="shooter_name_' + row_id + '" title="Shooter Name" placeholder="Name" required>\
         <div id="suggestion_box_' + row_id +'" class="suggestion_box"></div></td>\
         <input type="hidden" id="suggestion_box_' + row_id + '_input" name="name">\
         <td>' + get_class_types(row_id) + '</td>\
@@ -398,18 +398,46 @@ function show_matchs_by_row(){
             match_row.id = 'match_row_' + i
             //Match name
             let match_name = document.createElement('td')
+            match_name.id = matches[i][0]
             match_name.textContent = matches[i][1]
             //Match type
             let match_distance = document.createElement('td')
-            match_distance.textContent = matches[i][2] + matches[i][4] + matches[i][3]
+            match_distance.textContent = "Dist: " + matches[i][2] + ", Sighters: " + matches[i][4] + ", Counters:" + matches[i][3]
             //Match description
             let match_description = document.createElement('td')
             match_description.textContent = matches[i][5]
-            match_row.append(match_name, match_distance, match_description) //Add cells to row
+            //Remove match button
+            let remove_match_button = document.createElement('button')
+            remove_match_button.id = 'remove_match_' + i
+            remove_match_button.textContent = '✖️'
+            remove_match_button.onclick = function () {remove_match('match_row_' + i)}
+            match_row.append(match_name, match_distance, match_description, remove_match_button) //Add cells to row
             matches_table.append(match_row) //Add row to table
         }
 
     })
+}
+
+function remove_match(match_row_id){
+    let match_row = document.getElementById(match_row_id)
+    let match_name = match_row.children[0].textContent
+    let match_id = match_row.children[0].id
+    let ask = window.confirm("Are you sure you want to remove match " + match_name + "?")
+    if (ask){
+        fetch("/removematch", {
+            method: "POST",
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({match_id: match_id})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success){
+                window.location.reload()
+            } else {
+                window.alert("Failed to remove match " + match_name + ". Match can't be removed when scores have been added to it.")
+            }
+        })
+    }
 }
 
 function toDateInputValue(dateObject){

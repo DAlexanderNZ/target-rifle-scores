@@ -72,6 +72,7 @@ def get_matches(conn, competition):
             INNER JOIN match ON competition_match.match_id = match.match_id
             INNER JOIN match_type ON (match.match_distance, match.match_counters) = (match_type.match_distance, match_type.match_counters)
             WHERE competition_match.competition = %s
+            ORDER BY match.match_distance, match.match_counters
             """
             cur.execute(query, (competition,))
             matches = cur.fetchall()
@@ -111,7 +112,7 @@ def get_name_suggestions(conn, name):
     except (Exception, psycopg.DatabaseError) as error:
         print(f'get_name_suggestions: {error}')
 
-def record_score(score, conn):
+def record_score(conn, score):
     """
     Record scores for shooters in a match
     :param score: a dictionary of score attributes [shooter_id, competition, match_id, shots, shot_type, total, class, date]
@@ -122,7 +123,7 @@ def record_score(score, conn):
         cur.execute(query, score)
     conn.commit()
 
-def record_new_match(match, conn):
+def record_new_match(conn, match):
     """
     Record a new match in the database
     :param match: a dictionary of match attributes [match_name, match_distance + match_distance_type, match_counters, match_description, competition]
@@ -137,6 +138,30 @@ def record_new_match(match, conn):
         query = "INSERT INTO competition_match (competition, match_id) VALUES (%s, %s);"
         cur.execute(query, (match[4], match_id))
     conn.commit()
+
+def remove_match(conn, match_id):
+    """
+    Removes match from database if it has no scores
+    :param match_id: the match_id of the match to be removed
+    :param conn: a connection to the database
+    """
+    try:
+        with conn.cursor() as cur:
+            query = """
+            DELETE FROM match 
+            WHERE match_id NOT IN (
+                SELECT DISTINCT match_id FROM score
+            ) AND match_id = %s;
+            """
+            cur.execute(query, (match_id,))
+            match_removed = cur.rowcount
+        conn.commit()
+        if match_removed == 0:
+            return False
+        return True
+    except (Exception, psycopg.DatabaseError) as error:
+        print(f'remove_match: {error}')
+        return False
 
 #
 #   First time database setup
