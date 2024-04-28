@@ -24,7 +24,7 @@
                         {% for comp in competitions %}
                         <option value=" {{ comp[0] }} "> {{ comp[0] }} </option>
                         {% endfor %}
-                        <option value="new_comp">New Competition</option>
+                        <option value="new_competition">New Competition</option>
                     </select>
                 </td>
                 <!-- Select a match from the competition or create a new match-->
@@ -64,5 +64,8 @@
     <script>
         const classes = json_data('{{ classes|tojson }}')
         const match_type = json_data('{{ match_type|tojson }}')
+        document.getElementById('date_picker').value = toDateInputValue(new Date())
+        get_competition_matches()
+        add_row()
     </script>
 {% endblock %}
