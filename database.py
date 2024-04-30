@@ -26,6 +26,10 @@ def connect():
     except (Exception, psycopg.DatabaseError) as error:
         print(f'Error : {error}')
 
+#
+#   Score related database functions
+#
+
 def replace_v_x(scores):
     """ Replace 5.001 with V and 6.001 with X in the scores list when returning scores to display """
     for score in scores:
@@ -162,6 +166,20 @@ def remove_match(conn, match_id):
     except (Exception, psycopg.DatabaseError) as error:
         print(f'remove_match: {error}')
         return False
+
+#
+#   User auth and account related database functions
+#
+
+def get_user(conn, user_id):
+    """ Get a user from the database. Return None if user doesn't exist """
+    return None
+
+def is_authenticated(conn, user_id):
+    """ Check if a user is authenticated """
+    try:
+        with conn.cursor() as cur:
+            query = "SELECT "
 
 #
 #   First time database setup
