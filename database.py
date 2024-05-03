@@ -1,4 +1,5 @@
 from configparser import ConfigParser
+import bcrypt
 import psycopg
 
 class database():
@@ -25,7 +26,6 @@ class database():
     def connect(self):
         """ Connect to the PostgreSQL database server """
         config = self.load_config(self.config_file)
-        print(config)
         try: 
             conn = psycopg.connect(**config)
             print(f'Connected to {config["dbname"]} database')
@@ -128,7 +128,6 @@ class database():
         """
         Record scores for shooters in a match
         :param score: a dictionary of score attributes [shooter_id, competition, match_id, shots, shot_type, total, class, date]
-        :param conn: a connection to the database
         """
         with self.conn.cursor() as cur:
             query = "INSERT INTO score (shooter_id, competition, match_id, shots, shot_type, total, class, date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
@@ -139,7 +138,6 @@ class database():
         """
         Record a new match in the database
         :param match: a dictionary of match attributes [match_name, match_distance + match_distance_type, match_counters, match_description, competition]
-        :param conn: a connection to the database
         """
         with self.conn.cursor() as cur:
             query = """
@@ -155,7 +153,6 @@ class database():
         """
         Removes match from database if it has no scores
         :param match_id: the match_id of the match to be removed
-        :param conn: a connection to the database
         """
         try:
             with self.conn.cursor() as cur:
@@ -179,9 +176,56 @@ class database():
     #   User auth and account related database functions
     #
 
-    def get_user(self, user_id):
+    def register_user(self, new_user):
+        """ Register a new user in the database """
+        password_hash = bcrypt.hashpw(new_user['password'].encode('utf-8'), bcrypt.gensalt())
+        try:
+            with self.conn.cursor() as cur:
+                query = "INSERT INTO users (email, password_hash, first_name, last_name) VALUES (%s, %s, %s, %s); RETURNING id;"
+                cur.execute(query, (new_user['email'], password_hash, new_user['first_name'], new_user['last_name']))
+                user_id = cur.fetchone()[0]
+                query = "INSERT INTO user_edit_log (user_id) VALUES (%s);"
+                cur.execute(query, (user_id,))
+            self.conn.commit()
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'register_user: {error}')
+
+    def verify_user(self, user_email, user_password):
+        """ Verify a user's password """
+        try:
+            with self.conn.cursor() as cur:
+                query = "SELECT password FROM users WHERE email = %s;"
+                cur.execute(query, (user_email,))
+                password_hash = cur.fetchone()[0]
+                if bcrypt.checkpw(user_password.encode('utf-8'), password_hash):
+                    return True
+                return False
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'verify_user: {error}')
+            return False
+
+    def get_user_id(self, user_email):
         """ Get a user from the database. Return None if user doesn't exist """
-        return None
+        try:
+            with self.conn.cursor() as cur:
+                query = "SELECT id FROM users WHERE email = %s"
+                cur.execute(query, (user_email,))
+                user_id = cur.fetchone()
+                return user_id
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'get_user_id: {error}')
+            return None
+    
+    def update_user_password(self, user_email, user_password):
+        """ Update a user's password """
+        password_hash = bcrypt.hashpw(user_password.encode('utf-8'), bcrypt.gensalt())
+        try:
+            with self.conn.cursor() as cur:
+                query = "UPDATE users SET password_hash = %s WHERE email = %s;"
+                cur.execute(query, (password_hash, user_email))
+            self.conn.commit()
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'update_user_password: {error}')
 
     def is_authenticated(self, user_id):
         """ Check if a user is authenticated """
@@ -205,7 +249,6 @@ class database():
         """ 
         Create a new shooter 
         :param shooter: a dictionary of shooter attributes [shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob]
-        :param conn: a connection to the database
         """
         try:
                 with self.conn.cursor() as cur:

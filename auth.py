@@ -1,14 +1,15 @@
 from flask import session
-from flask_login import LoginManager
+from flask_login import LoginManager, UserMixin
 import secrets
 from app import app
-import database
+from database import database
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-app.secret_key = create_secret_key()
+app.secret_key = secrets.token_hex()
 
-class User():
+class User(UserMixin, database):
     """ User class for flask_login. """
     def __init__(self, user_id, email, password, first_name, last_name):
         self.id = user_id
@@ -19,8 +20,7 @@ class User():
     
     def is_authenticated(self):
         """ Check if the user is authenticated. """
-        database.is_authenticated(conn, self.id)
-        return session.get('logged_in', False)
+        return True
     
     def is_active(self):
         """ Check if the user is active. """

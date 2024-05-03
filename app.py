@@ -47,7 +47,6 @@ def index():
 @app.route('/allscores')
 def all_scores():
     scores = db.get_all_scores()
-    print(scores)
     return render_template('allscores.html', results=scores, zip=zip)
 
 @app.route('/addscore', methods=['GET', 'POST'])
