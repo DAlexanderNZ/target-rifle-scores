@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, Response
-import database
+from database import database
 import psycopg
 import json
 
@@ -36,8 +36,9 @@ for score in scores:
         print(f'Number of shots and shot types do not match, {score["name"]}')
 
 #Get data from database
-config = database.load_config()
-conn = psycopg.connect(**config)
+#config = database.load_config()
+#conn = psycopg.connect(**config)
+db = database()
 
 @app.route('/')
 def index():
@@ -45,14 +46,15 @@ def index():
 
 @app.route('/allscores')
 def all_scores():
-    scores = database.get_all_scores(conn)
-    return render_template('allscores.html', results=scores)
+    scores = db.get_all_scores()
+    print(scores)
+    return render_template('allscores.html', results=scores, zip=zip)
 
 @app.route('/addscore', methods=['GET', 'POST'])
 def add_score():
     #Request data from database required for the page and data validation
-    competitions = database.get_competitions(conn)
-    classes = database.get_classes(conn)
+    competitions = db.get_competitions()
+    classes = db.get_classes()
     default_match = [{"match_sighters": 2, "match_counters": 10}]
 
     if request.method == 'POST':
@@ -69,7 +71,7 @@ def add_score():
         #Validate form data
         score = [shooter_id, competition, match_id, shots, shot_type, total, class_type, date]
         #Store data
-        database.record_score(conn, score)
+        db.record_score(score)
         #Store selected competition
         selected_competition = competition
     else:
@@ -79,7 +81,7 @@ def add_score():
 
 @app.route('/addmatchcomp', methods=['GET', 'POST'])
 def add_match_comp():
-    competitions = database.get_competitions(conn)
+    competitions = db.get_competitions()
     if request.method == 'POST':
         #Handle form submission
         competition = request.form['competition']
@@ -93,7 +95,7 @@ def add_match_comp():
 
         #Format data for submission
         new_match = [match_name, match_distance + match_distance_type, match_counters, match_description, competition]
-        database.record_new_match(conn, new_match)
+        db.record_new_match(new_match)
         #Store selected competition
         selected_competition = competition
     else:
@@ -105,20 +107,20 @@ def add_match_comp():
 def remove_match():
     """ Removes match from database if it has no scores """
     match_id = request.json['match_id']
-    success = database.remove_match(conn, match_id)
+    success = db.remove_match(match_id)
     return Response(json.dumps({'success': success}), mimetype='application/json')
 
 @app.route('/getmatches', methods=['POST'])
 def get_matches():
     competition = request.json['competition'].strip()
-    matches = database.get_matches(conn, competition)
+    matches = db.get_matches(competition)
     return Response(json.dumps(matches), mimetype='application/json')
 
 @app.route('/getnamesuggestion', methods=['POST'])
 def get_name_suggestion():
     print(request.json)
     names = request.json['name'].strip().lower()
-    suggestions = database.get_name_suggestions(conn, names)
+    suggestions = db.get_name_suggestions(names)
     print(suggestions)
     return Response(json.dumps(suggestions), mimetype='application/json')
 
