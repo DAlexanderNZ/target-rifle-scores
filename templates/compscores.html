@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Rifle Scores | All scores{% endblock %}
+{% block content %}
+<h1>All results in Competition</h1>
+<select  id="competition_select" title="Select relevent competition" name="competition" onchange="show_competition_scores()">
+    {% for comp in competitions %}
+    <option value="{{ comp[0] }}" {% if selected_competition == comp[0] %}  selected {% endif %}>{{ comp[0] }}</option>
+    {% endfor %}
+</select>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+    //Store selected competition in session storage to be used when reloading page
+    window.onload = function () {
+            var selected_comp = sessionStorage.getItem("selected_comp");
+            document.getElementById("competition_select").value = selected_comp;
+
+            document.getElementById("competition_select").addEventListener("change", function () {
+                var selval = this.value;
+                if (selval == "new_competition") {return} //If new competition is selected, do nothing
+                sessionStorage.setItem("selected_comp", selval);
+            })
+            show_competition_scores()
+        }
+</script>
+{% endblock %}

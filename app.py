@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, Response
 from database import database
-import psycopg
+from datetime import date
 import json
 
 app = Flask(__name__)
+db = database()
 
 #Sample scores
 #Shot types: 0 - coutning shot, 1 - non converted sighter
@@ -35,11 +36,6 @@ for score in scores:
     if len(score["shots"]) != len(score["shot_type"]):
         print(f'Number of shots and shot types do not match, {score["name"]}')
 
-#Get data from database
-#config = database.load_config()
-#conn = psycopg.connect(**config)
-db = database()
-
 @app.route('/')
 def index():
     return render_template('index.html', results=scores, zip=zip)
@@ -47,7 +43,27 @@ def index():
 @app.route('/allscores')
 def all_scores():
     scores = db.get_all_scores()
-    return render_template('allscores.html', results=scores, zip=zip)
+    return render_template('allscores.html', results=scores)
+
+#Display all scores by split by match and then by class
+@app.route('/compscores', methods=['GET'])
+def comp_scores():    
+    competitions = db.get_competitions()
+    return render_template('compscores.html', competitions=competitions)
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))
+
+
+@app.route('/getcompscores', methods=['POST'])
+def get_comp_scores():
+    competition = request.json['competition'].strip()
+    print(competition)
+    scores = db.get_comp_scores(competition)
+    return Response(json.dumps(scores, default=json_serial), mimetype='application/json')
 
 @app.route('/addscore', methods=['GET', 'POST'])
 def add_score():

@@ -37,32 +37,57 @@ class database():
     #   Score related database functions
     #
 
-    def replace_v_x(self, scores):
+    def replace_v_x(self, scores, score_pos):
         """ Replace 5.001 with V and 6.001 with X in the scores list when returning scores to display """
         for score in scores:
-            for index, shot in enumerate(score[3]):
+            for i, shot in enumerate(score[score_pos]):
                 if shot == '5.001':
-                    score[3][index] = 'V'
+                    score[score_pos][i] = 'V'
                 elif shot == '6.001':
-                    score[3][index] = 'X'
+                    score[score_pos][i] = 'X'
         return scores
-
+    
     def get_all_scores(self):
         """ Get all scores from the database """
         try:
             with self.conn.cursor() as cur:
+                #Get the score values and related infomation in the format [shooter_name, class, competition, match_name, shots, shot_type, total, date]
                 cur.execute("""
-                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.competition, match.match_name, score.shots, score.shot_type, score.total, score.date
+                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, score.competition, match.match_name, score.shots, score.shot_type, score.total, score.date
                 FROM score
                 INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
                 INNER JOIN match ON  score.match_id = match.match_id;
                 """)
                 scores = cur.fetchall()
-                scores = self.replace_v_x(scores)
+                scores = self.replace_v_x(scores, 4)
                 return scores
         except (Exception, psycopg.DatabaseError) as error:
             print(f'get_all_scores: {error}')
             return []  # Return an empty list in case of an error
+        
+    def get_comp_scores(self, competition):
+        """ Get all scores for a competition from the database """
+        try:
+            with self.conn.cursor() as cur:
+                #Get the score values and related infomation in the format [shooter_name, class, match_name, shots, shot_type, total, date]
+                classes = ['TR-A', 'TR-B', 'TR-C', 'TR-T', 'FTR-O', 'FTR-C', 'FPR-O', 'F-Open']
+                query = """
+                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, match.match_name, score.shots, score.shot_type, score.total, score.date
+                FROM score
+                INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
+                INNER JOIN match ON  score.match_id = match.match_id
+                LEFT JOIN class ON score.class = class.class
+                WHERE score.competition = %s
+                ORDER BY match.match_name, 
+                array_position(ARRAY[%s], score.class);
+                """
+                cur.execute(query, (competition, classes))
+                scores = cur.fetchall()
+                scores = self.replace_v_x(scores, 3)
+                print(scores)
+                return scores
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'get_comp_scores: {error}')
 
     def get_competitions(self, query='SELECT competition FROM competition'):
         """ Get the competitions from the database """
@@ -382,7 +407,7 @@ class database():
             { 'class': 'TR-B', 'score_type':  'V', 'name': 'Target Rifle B Grade'},
             { 'class': 'TR-C', 'score_type':  'V', 'name': 'Target Rifle C Grade'},
             { 'class': 'TR-T', 'score_type':  'V', 'name': 'Target Rifle Tyro Grade'},
-            { 'class': 'FO-O', 'score_type':  'X', 'name': 'F Open'},
+            { 'class': 'F-Open', 'score_type':  'X', 'name': 'F Open'},
             { 'class': 'FTR-O', 'score_type':  'X', 'name': 'FTR'},
             { 'class': 'FTR-C', 'score_type':  'X', 'name': 'FTR Classic'},
             { 'class': 'FPR-O', 'score_type':  'X', 'name': 'FPR (Precision Rifle)'}

@@ -439,6 +439,85 @@ function remove_match(match_row_id){
     }
 }
 
+//Display comp scores code:
+//Get scores for selected comp
+function show_competition_scores(){
+    let competition = document.getElementById('competition_select').value
+    fetch("/getcompscores", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({competition: competition})
+    })
+    .then(response => response.json())
+    .then(data => {
+        const unique_classes = [...new Set(data.map(item => item[1]))] //Get unique classes from the data
+        console.log(unique_classes)
+        create_tables_for_classes(data, unique_classes)
+
+    })
+}
+
+//Render the tables for the scores per grade.
+//TODO: Also split by match, display match name and date above each table
+function create_tables_for_classes(data, unique_classes) {
+    //Clear previous tables. Rapper Div to make this easy
+    if (document.getElementById('classes')){
+        document.getElementById('classes').remove()
+    }
+    let table_div = document.createElement('div')
+    table_div.id = 'classes'
+    //Create new tables
+    unique_classes.forEach(function (class_item) {
+        let table = document.createElement('table')
+        table.id = 'class'
+        let thead = document.createElement('thead')
+        let header_row = document.createElement('tr'); //; need for next line to work starting with [
+        ['Name', 'Class', 'Shots', 'Total'].forEach((header) => {
+            let th = document.createElement('th')
+            th.textContent = header
+            header_row.appendChild(th)
+        })
+        thead.appendChild(header_row)
+        table.appendChild(thead)
+
+        let tbody = document.createElement('tbody')
+        data.filter(item => item[1] === class_item).forEach(function (item) {
+            let tr = document.createElement('tr')
+            item.forEach((cell, index) => {
+                //Get data for rows displayed ['Name', 'Class', 'Shots', 'Total']
+                if (index === 0 || index === 1 || index === 3 || index === 5) {
+                    let td = document.createElement('td')
+                    //Put shots in spans for css
+                    if (index === 3){
+                        for (let i = 0; i < cell.length; i++){
+                            let shot = document.createElement('span')
+                            shot.className = 'shot'
+                            //If a sighter is not converted mark it for css with another span
+                            if (i < item[4].length){
+                                let sighter = document.createElement('span')
+                                sighter.className = 'converted'
+                                sighter.textContent = cell[i]
+                                shot.appendChild(sighter)
+                            } else {
+                                shot.textContent = cell[i]
+                            }
+                            td.appendChild(shot)
+                        }
+                    } else { //Else display just display data
+                        td.textContent = cell
+                    }
+                    tr.appendChild(td)
+                }
+            })
+            tbody.appendChild(tr)
+        })
+        table.appendChild(tbody)
+        table_div.appendChild(table)
+    })
+    document.body.appendChild(table_div)
+}
+
+
 function toDateInputValue(dateObject){
     const local = new Date(dateObject)
     local.setMinutes(dateObject.getMinutes() - dateObject.getTimezoneOffset())
