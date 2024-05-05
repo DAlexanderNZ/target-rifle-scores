@@ -66,17 +66,18 @@
         window.onload = function () {
             var selected_comp = sessionStorage.getItem("selected_comp");
             document.getElementById("competition_select").value = selected_comp;
-        }
 
-        document.getElementById("competition_select").addEventListener("change", function () {
-            var selval = this.value;
-            if (selval == "new_competition") {return} //If new competition is selected, do nothing
-            sessionStorage.setItem("selected_comp", selval);
-        })
+            document.getElementById("competition_select").addEventListener("change", function () {
+                var selval = this.value;
+                if (selval == "new_competition") {return} //If new competition is selected, do nothing
+                sessionStorage.setItem("selected_comp", selval);
+            })
+            get_competition_matches()
+        }
         const classes = json_data('{{ classes|tojson }}')
         const match_type = json_data('{{ match_type|tojson }}')
         document.getElementById('date_picker').value = toDateInputValue(new Date())
-        get_competition_matches()
+        
         add_row()
     </script>
 {% endblock %}
