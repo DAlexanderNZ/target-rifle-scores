@@ -334,11 +334,10 @@ function update_to_tr(row_id){
 
 //TODO: Filter shown grades by grades defined on a competition basis. E.g. Often there is no TR-T entry or one class isn't run in the comp
 function show_grades(row_id){
-    let current_class = document.getElementById('type_class_' + row_id).value
-    current_class.name = 'hidden'
+    let current_class = document.getElementById('type_class_' + row_id)
     let tr_select = document.getElementById('tr_grades_' + row_id)
     let ftr_select = document.getElementById('ftr_grades_' + row_id)
-    if (current_class === 'TR'){
+    if (current_class.value === 'TR'){
         tr_select.style.visibility = 'visible'
         tr_select.name = 'class_type'
         ftr_select.style.visibility = 'hidden'
@@ -346,14 +345,14 @@ function show_grades(row_id){
     } else {
         tr_select.style.visibility = 'hidden'
         tr_select.name = 'hidden'
-        if (current_class === 'FTR'){
+        if (current_class.value === 'FTR'){
             ftr_select.style.visibility = 'visible'
             ftr_select.name = 'class_type'
         } else{
             ftr_select.style.visibility = 'hidden'
         }
     }
-    if (current_class === 'FO-O'){
+    if (current_class.value === 'F-Open'){
             current_class.name = 'class_type'
         }
 }
