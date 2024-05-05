@@ -69,12 +69,12 @@
         window.onload = function () {
             var selected_comp = sessionStorage.getItem("selected_comp");
             document.getElementById("competition_select").value = selected_comp;
-        }
-
-        document.getElementById("competition_select").addEventListener("change", function () {
-            var selval = this.value;
-            sessionStorage.setItem("selected_comp", selval);
-        })
-        show_matchs_by_row()
+            
+            document.getElementById("competition_select").addEventListener("change", function () {
+                var selval = this.value;
+                sessionStorage.setItem("selected_comp", selval);
+            })
+            show_matchs_by_row()
+        }  
     </script>
 {% endblock %}
