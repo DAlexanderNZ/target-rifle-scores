@@ -1,68 +1,75 @@
 /* Global Styles */
-*, *::before, *::after {
-  box-sizing: border-box;
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
 body {
-  font-family: 'Arial', sans-serif;
-  background-color: #f7f7f7;
-  color: #333;
-  line-height: 1.6;
+    font-family: 'Arial', sans-serif;
+    background-color: #f7f7f7;
+    color: #333;
+    line-height: 1.6;
 }
 
 /* Navigation Styles */
 nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f2f2f2;
-  padding: 1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f2f2f2;
+    padding: 1em;
 }
 
 nav a {
-  text-decoration: none;
-  color: #333;
-  font-size: 1em;
-  padding: 0.5em;
+    text-decoration: none;
+    color: #333;
+    font-size: 1em;
+    padding: 0.5em;
 }
 
 nav a:hover {
-  color: #0275d8;
+    color: #0275d8;
 }
 
 /* Table Styles */
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1em;
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
 }
 
-th, td {
-  padding: 0.5em;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
+th,
+td {
+    padding: 0.5em;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
 }
 
 th {
-  background-color: #f2f2f2;
+    background-color: #f2f2f2;
 }
 
 tr:nth-child(odd) {
-  background-color: #e4e4e4;
+    background-color: #e4e4e4;
 }
 
 /* Form Styles */
-select, .shot, .sighter {
-  border: 1px solid #ccc;
-  border-radius: 0.25em;
-  padding: 0.35em;
-  margin-top: 0.5em;
-  font-size: 1em;
+select,
+.shot,
+.sighter {
+    border: 1px solid #ccc;
+    border-radius: 0.25em;
+    padding: 0.35em;
+    margin-top: 0.5em;
+    font-size: 1em;
 }
 
-select:focus, .shot:focus, .sighter:focus {
-  border-color: #0275d8;
-  outline: none;
+select:focus,
+.shot:focus,
+.sighter:focus {
+    border-color: #0275d8;
+    outline: none;
 }
 
 /* Suggestion Box Styles */
@@ -105,44 +112,59 @@ select:focus, .shot:focus, .sighter:focus {
 
 /* Utility Classes */
 .converted {
-  text-decoration: line-through;
+    position: relative;
+    display: inline-block;
+}
+
+.converted::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -25%;
+    right: -25%;
+    border-top: 2px solid; /* Set the color of the line with border-color */
+    border-color: #0275d8;
+    transform: rotate(-20deg); /* Adjust the angle as needed */
+    transform-origin: 0 0; /* Adjust the rotation point as needed */
 }
 
 .score-possible {
-  color: #d9534f;
+    color: #d9534f;
 }
 
 /* Responsive Styles */
 @media (max-width: 768px) {
-  nav {
-    flex-direction: column;
-  }
+    nav {
+        flex-direction: column;
+    }
 
-  nav a {
-    margin-bottom: 0.5em;
-  }
+    nav a {
+        margin-bottom: 0.5em;
+    }
 
-  table, th, td {
-    display: block;
-  }
+    table,
+    th,
+    td {
+        display: block;
+    }
 
-  th {
-    display: none;
-  }
+    th {
+        display: none;
+    }
 
-  td {
-    border: none;
-    position: relative;
-    padding-left: 50%;
-  }
+    td {
+        border: none;
+        position: relative;
+        padding-left: 50%;
+    }
 
-  td:before {
-    content: attr(data-label);
-    position: absolute;
-    left: 0;
-    width: 50%;
-    padding-left: 0.5em;
-    font-weight: bold;
-    text-align: left;
-  }
+    td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 50%;
+        padding-left: 0.5em;
+        font-weight: bold;
+        text-align: left;
+    }
 }
