@@ -5,12 +5,12 @@ import psycopg
 class database():
     def  __init__(self, config_file='database.ini'):
         """ Initialise the database class with a config file """
-        #self.config = self.load_config(config_file)
         self.config_file = config_file
         self.conn = self.connect()
 
     #Database config and loading
-    def load_config(self, filename, section='postgresql'):
+    @staticmethod
+    def load_config(filename, section='postgresql'):
         """ Use configparser to load and parse config ini file """
         parser = ConfigParser()
         parser.read(filename)
@@ -37,7 +37,8 @@ class database():
     #   Score related database functions
     #
 
-    def replace_v_x(self, scores, score_pos):
+    @staticmethod
+    def replace_v_x(scores, score_pos):
         """ Replace 5.001 with V and 6.001 with X in the scores list when returning scores to display """
         for score in scores:
             for i, shot in enumerate(score[score_pos]):
@@ -393,7 +394,7 @@ class database():
         )
         try:
             with self.conn.cursor() as cur:
-                print(f'Creating tables in database')
+                print('Creating tables in database')
                 for command in commands:
                     cur.execute(command)
             self.conn.commit()
