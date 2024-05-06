@@ -453,7 +453,6 @@ function show_competition_scores(){
         const unique_classes = [...new Set(data.map(item => item[1]))] //Get unique classes from the data
         console.log(unique_classes)
         create_tables_for_classes(data, unique_classes)
-
     })
 }
 
@@ -517,6 +516,62 @@ function create_tables_for_classes(data, unique_classes) {
     document.body.appendChild(table_div)
 }
 
+//Display comp result code:
+function show_competition_results(){
+    let competition = document.getElementById('competition_select').value
+    fetch("/getcompresults", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({competition: competition})
+    })
+    .then(response => response.json())
+    .then(data => {
+        const unique_classes = [...new Set(data.map(item => item[1]))]
+        console.log(unique_classes)
+        create_tables_for_results(data, unique_classes)
+    })
+}
+
+function create_tables_for_results(data, unique_classes) {
+    //Map results data
+    //Data format [shooter_name, class, match_name, total, date]
+    let dataMap =  new Map()
+    data.forEach(function (item) {
+        if (dataMap.has(item[0])){
+            dataMap.get(item[0]).push([item[1], item[2], item[3], item[4]])
+        } else {
+            dataMap.set(item[0], [[item[1], item[2], item[3], item[4]]])
+        }
+    })
+    console.log(dataMap)
+
+    //Clear previous tables. Rapper Div to make this easy
+    if (document.getElementById('results')){
+        document.getElementById('results').remove()
+    }
+    let table_div = document.createElement('div')
+    table_div.id = 'results'
+    //Create new tables
+    let table = document.createElement('table')
+    table.id = 'results_table'
+    let thead = document.createElement('thead')
+    //Create table header
+    let header_row = document.createElement('tr')
+    header_row.appendChild(document.createElement('th').textContent = 'Name')
+    //Find unique matches
+    let unique_matches = [...new Set(data.map(item => item[2]))]
+    unique_matches.forEach(function (match) {
+        header_row.appendChild(document.createElement('th').textContent = match)
+    })
+    thead.appendChild(header_row)
+    table.appendChild(thead)
+    //Table Body
+    let tbody = document.createElement('tbody')
+
+
+    table_div.appendChild(table)
+    document.body.appendChild(table_div)
+}
 
 function toDateInputValue(dateObject){
     const local = new Date(dateObject)

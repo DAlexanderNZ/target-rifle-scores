@@ -7,6 +7,7 @@ class database():
         """ Initialise the database class with a config file """
         self.config_file = config_file
         self.conn = self.connect()
+        self.classes = ['TR-A', 'TR-B', 'TR-C', 'TR-T', 'FTR-O', 'FTR-C', 'FPR-O', 'F-Open']
 
     #Database config and loading
     @staticmethod
@@ -71,7 +72,6 @@ class database():
         try:
             with self.conn.cursor() as cur:
                 #Get the score values and related infomation in the format [shooter_name, class, match_name, shots, shot_type, total, date]
-                classes = ['TR-A', 'TR-B', 'TR-C', 'TR-T', 'FTR-O', 'FTR-C', 'FPR-O', 'F-Open']
                 query = """
                 SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, match.match_name, score.shots, score.shot_type, score.total, score.date
                 FROM score
@@ -82,13 +82,33 @@ class database():
                 ORDER BY match.match_name, 
                 array_position(ARRAY[%s], score.class);
                 """
-                cur.execute(query, (competition, classes))
+                cur.execute(query, (competition, self.classes))
                 scores = cur.fetchall()
                 scores = self.replace_v_x(scores, 3)
-                print(scores)
                 return scores
         except (Exception, psycopg.DatabaseError) as error:
             print(f'get_comp_scores: {error}')
+
+    def get_comp_results(self, competition):
+        """ Get the results for a competition from the database """
+        try:
+            with self.conn.cursor() as cur:
+                #Get the score total values and related infomation in the format [shooter_name, class, match_name, total, date]
+                query = """
+                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, match.match_name, score.total, score.date
+                FROM score
+                INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
+                INNER JOIN match ON  score.match_id = match.match_id
+                LEFT JOIN class ON score.class = class.class
+                WHERE score.competition = %s
+                ORDER BY match.match_name, 
+                array_position(ARRAY[%s], score.class);
+                """
+                cur.execute(query, (competition, self.classes))
+                results = cur.fetchall()
+                return results
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'get_comp_results: {error}')
 
     def get_competitions(self, query='SELECT competition FROM competition'):
         """ Get the competitions from the database """

@@ -8,6 +8,7 @@ db = database()
 
 @app.route('/')
 def index():
+    #TODO: Create proper index page. Show highlighted results from recent matchs
     scores = db.get_all_scores()
     return render_template('allscores.html', results=scores)
 
@@ -26,15 +27,24 @@ def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, (date)):
         return obj.isoformat()
-    raise TypeError("Type %s not serializable" % type(obj))
-
+    raise TypeError(f"Type {type(obj)} not serializable")
 
 @app.route('/getcompscores', methods=['POST'])
 def get_comp_scores():
     competition = request.json['competition'].strip()
-    print(competition)
     scores = db.get_comp_scores(competition)
     return Response(json.dumps(scores, default=json_serial), mimetype='application/json')
+
+@app.route('/compresults', methods=['GET'])
+def comp_results():
+    competitions = db.get_competitions()
+    return render_template('compresults.html', competitions=competitions)
+
+@app.route('/getcompresults', methods=['POST'])
+def get_comp_results():
+    competition = request.json['competition'].strip()
+    results = db.get_comp_results(competition)
+    return Response(json.dumps(results, default=json_serial), mimetype='application/json')
 
 @app.route('/addscore', methods=['GET'])
 def add_score_page():
