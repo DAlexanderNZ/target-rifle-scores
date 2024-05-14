@@ -1,5 +1,5 @@
 [postgresql]
-host=localhost
+host=localhost or db (for docker)
 dbname=target_rifle_scores
 user=user
 password=password
