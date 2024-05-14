@@ -1,5 +1,9 @@
 # target-rifle-scores
 
+## Build Docker Image
+1. `docker build -t target-rifle-scores .`
+2. Run the image from Docker Desktop
+
 ## Install
 
 ### Database (Linux)
