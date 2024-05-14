@@ -12,6 +12,7 @@ def index():
     scores = db.get_all_scores()
     return render_template('allscores.html', results=scores)
 
+#Routes for score display and submision
 @app.route('/allscores')
 def all_scores():
     scores = db.get_all_scores()
@@ -46,6 +47,7 @@ def get_comp_results():
     results = db.get_comp_results(competition)
     return Response(json.dumps(results, default=json_serial), mimetype='application/json')
 
+#Routes for adding scores, matchs and competitions
 @app.route('/addscore', methods=['GET'])
 def add_score_page():
     competitions = db.get_competitions()
@@ -139,6 +141,19 @@ def add_competition():
     comp = [competition, description, match_id, match_name, match_description]
     print(comp) #TODO: store data
 
+#Routes for handling adding of shooters, clubs, etc
+@app.route('/addshooter', methods=['GET'])
+def add_shooter_page():
+    return render_template('addshooter.html')
+
+app.route('/addshooter', methods=['POST'])
+def add_shooter():
+    #Handle form submission
+    shooter_name = request.form['name']
+
+
+
+    return render_template('addshooter.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
