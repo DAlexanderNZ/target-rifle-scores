@@ -1,9 +1,12 @@
 from database import database
+import psycopg
 
 #Database class with default values. To be run on setting up app or container
 class database_setup(database):
     #Call setup functions when the setup class is defined.
-    def __init__(self):
+    def __init__(self, config_file='database.ini'):
+        self.config_file = config_file
+        self.conn = self.connect()
         self.create_tables()
         self.default_info()
 
