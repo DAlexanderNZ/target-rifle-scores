@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, Response
+from flask import Flask, render_template, request, Response, flash
 from database import database
 from datetime import date
 import json
@@ -84,8 +84,20 @@ def add_match_comp_page():
     competitions = db.get_competitions()
     return render_template('addmatchcomp.html', competitions=competitions)
 
-@app.route('/addmatchcomp', methods=['POST'])
-def add_match_comp():
+@app.route('/addcomp', methods=['POST'])
+def add_comp():
+    competitions = db.get_competitions()
+    #Handle form submission
+    new_competition = request.form['new_competition']
+    new_competition_desc = request.form['new_competition_desc']
+    new_comp = (new_competition, new_competition_desc)
+    db.record_new_competition(new_comp)
+
+    selected_competition = new_competition
+    return render_template('addmatchcomp.html', competitions=competitions, selected_competition=selected_competition)
+
+@app.route('/addmatch', methods=['POST'])
+def add_match():
     competitions = db.get_competitions()
     if request.method == 'POST':
         #Handle form submission
@@ -128,18 +140,6 @@ def get_name_suggestion():
     suggestions = db.get_name_suggestions(names)
     print(suggestions)
     return Response(json.dumps(suggestions), mimetype='application/json')
-
-@app.route('/addcompetition', methods=['POST'])
-def add_competition():
-    #Handle form submission
-    competition = request.form['competition']
-    description = request.form['description']
-    match_id = request.form['match_id']
-    match_name = request.form['match_name']
-    match_description = request.form['match_description']
-
-    comp = [competition, description, match_id, match_name, match_description]
-    print(comp) #TODO: store data
 
 #Routes for handling adding of shooters, clubs, etc
 @app.route('/addshooter', methods=['GET'])

@@ -199,20 +199,36 @@ class database():
             cur.execute(query, score)
         self.conn.commit()
 
+    def record_new_competition(self, competition):
+        """ Record a new competition in the database """
+        try:
+            with self.conn.cursor() as cur:
+                query = "INSERT INTO competition (competition, competition_description) VALUES (%s, %s);"
+                cur.execute(query, competition)
+            self.conn.commit()
+            return True
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'record_new_competition: {error}')
+            return error
+
     def record_new_match(self, match):
         """
         Record a new match in the database
         :param match: a dictionary of match attributes [match_name, match_distance + match_distance_type, match_counters, match_description, competition]
         """
-        with self.conn.cursor() as cur:
-            query = """
-            INSERT INTO match (match_name, match_distance, match_counters, description)  VALUES (%s, %s, %s, %s) RETURNING match_id;
-            """
-            cur.execute(query, (match[0], match[1], match[2], match[3]))
-            match_id = cur.fetchone()[0]
-            query = "INSERT INTO competition_match (competition, match_id) VALUES (%s, %s);"
-            cur.execute(query, (match[4], match_id))
-        self.conn.commit()
+        try:
+            with self.conn.cursor() as cur:
+                query = """
+                INSERT INTO match (match_name, match_distance, match_counters, description)  VALUES (%s, %s, %s, %s) RETURNING match_id;
+                """
+                cur.execute(query, (match[0], match[1], match[2], match[3]))
+                match_id = cur.fetchone()[0]
+                query = "INSERT INTO competition_match (competition, match_id) VALUES (%s, %s);"
+                cur.execute(query, (match[4], match_id))
+            self.conn.commit()
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'record_new_match: {error}')
+            return False
 
     def remove_match(self, match_id):
         """
