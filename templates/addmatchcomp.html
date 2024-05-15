@@ -3,9 +3,9 @@
 {% block content %}
 <h1>Add Competition</h1>
 <form method="post" action="{{ url_for('add_comp')}}">
-    <input type="text" name="new_competition" placeholder="Competition Name" required>
-    <input type="text" name="new_competition_desc" placeholder="Competition Description" required>
-    <input type="submit" value="Submit" title="Submit new competition">
+    <input type="text" name="new_competition" placeholder="Competition Name" title="New Competition Name"required>
+    <input type="text" name="new_competition_desc" placeholder="Competition Description" title="New Competition Description" required>
+    <input type="submit" value="Submit" title="Submit New Competition">
 </form>
 <h1>Add Match</h1>
 <p>
@@ -20,7 +20,7 @@
         <option value="{{ comp[0] }}" {% if selected_competition == comp[0] %}  selected {% endif %}>{{ comp[0] }}</option>
         {% endfor %}
     </select>
-    <input type="submit" value="Submit" title="Submit new match">
+    <input type="submit" value="Submit" title="Submit New Match">
     <input type="reset" value="Reset" title="Reset">
     <table id="matches">
         <tr>
@@ -62,7 +62,7 @@
                     <option value="7">7</option>
                 </select>
             </td>
-            <td><input type="text" name="match_description" placeholder="Match Description" required></td>
+            <td><input type="text" name="match_description" placeholder="Match Description" title="New Match Description" required></td>
             <td></td>
         </tr>
         <!-- Existing matchs in competition-->

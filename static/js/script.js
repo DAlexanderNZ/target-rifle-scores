@@ -406,11 +406,13 @@ function show_matchs_by_row(){
             let match_description = document.createElement('td')
             match_description.textContent = matches[i][5]
             //Remove match button
+            let match_remove_button = document.createElement('td')
             let remove_match_button = document.createElement('button')
             remove_match_button.id = 'remove_match_' + i
             remove_match_button.textContent = '✖️'
             remove_match_button.onclick = function () {remove_match('match_row_' + i)}
-            match_row.append(match_name, match_distance, match_description, remove_match_button) //Add cells to row
+            match_remove_button.append(remove_match_button)
+            match_row.append(match_name, match_distance, match_description, match_remove_button) //Add cells to row
             matches_table.append(match_row) //Add row to table
         }
 
