@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Rifle Scores | Add Shooter{% endblock %}
+{% block content %}
+<h1>Add a Shooter</h1>
+<p>
+    <ol>
+        <li>Enter details</li>
+        <li>Click submit</li>
+    </ol>
+</p>
+<form method="post" action="{{ url_for('add_shooter')}}">
+    <input type="text" name="first_name" placeholder="First Name" title="First Name" required>
+    <input type="text" name="last_name" placeholder="Last Name" title="Last Name">
+    <input type="number" name="nra_id" placeholder="NRA ID Number" title="NRA ID Number">
+    <input type="date" name="dob" id="date_picker" title="Date of birth" value="" required>
+</form>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+    document.getElementById('date_picker').value = toDateInputValue(new Date())
+</script>
+{% endblock %}
