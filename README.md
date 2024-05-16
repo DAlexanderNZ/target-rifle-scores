@@ -1,10 +1,15 @@
 # target-rifle-scores
+## Docker Deployment
+1. Install Docker on the host system
+2. Edit `database.ini.example` and rename it to `database.ini. Change user and password to match your custom the values in the docker compose file.
+3. Edit `docker-compose.yml` and change the database variables `POSTGRES_USER` and `POSTGRES_PASSWORD` to match the custom values in `database.ini`
+4. Run `docker-compose up` in the app directory to start the database and web server
 
-## Build Docker Image
+## Build Docker App Image
 1. `docker build -t target-rifle-scores .`
 2. Run the image from Docker Desktop
 
-## Install
+## Manual Install
 
 ### Database (Linux)
 1. Install postgresql for your system
