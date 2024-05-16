@@ -143,15 +143,23 @@ def get_name_suggestion():
 
 #Routes for handling adding of shooters, clubs, etc
 @app.route('/addshooter', methods=['GET'])
-def add_shooter_page():
+def add_shooter():
     return render_template('addshooter.html')
 
-app.route('/addshooter', methods=['POST'])
-def add_shooter():
+@app.route('/addshooter', methods=['POST'])
+def add_shooter_sub():
     #Handle form submission
-    shooter_name = request.form['name']
-
-
+    first_name = request.form['first_name']
+    last_name = request.form['last_name']
+    nra_id = request.form['nra_id']
+    #TODO: Add clubs
+    #club = request.form['club']
+    dob = request.form['dob']
+    if nra_id == '':
+        nra_id = None
+    new_shooter = [nra_id, first_name, last_name, dob]
+    print(f'Submited new shooter: {new_shooter}')
+    db.create_shooter(new_shooter)
 
     return render_template('addshooter.html')
 

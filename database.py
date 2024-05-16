@@ -332,10 +332,11 @@ class database():
         :param shooter: a dictionary of shooter attributes [shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob]
         """
         try:
-                with self.conn.cursor() as cur:
-                    #This query needs updating to best practice 
-                    cur.execute("INSERT INTO shooter (shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob"")VALUES (%s, %s, %s, %s);", 
-                                (shooter['shooter_nra_id'], shooter['shooter_first_name'], shooter['shooter_last_name'], shooter['shooter_dob']))
+            with self.conn.cursor() as cur:
+                query = "INSERT INTO shooter (shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob"")VALUES (%s, %s, %s, %s);"
+                print
+                cur.execute(query, shooter)
+            self.conn.commit()
         except (Exception, psycopg.DatabaseError) as error:
             print(f'create_shooter: {error}')
 
