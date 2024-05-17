@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Rifle Scores | Bulk Add Scores From CSV{% endblock %}
+{% block content %}
+<h1>Upload CSVs of scores</h1>
+<p>Pase a CSV file of scores to add to the database. The CSV should have the following columns:</p>
+<ul>Last Name</ul>
+<ul>First Name/Inital</ul>
+<ul>Club</ul>
+<ul>Countout</ul>
+<ul>Score</ul>
+<form method="post" action="{{ url_for('bulk_add_score') }}" enctype="multipart/form-data">
+    <table>
+        <tr>
+            <th>
+            <select  id="competition_select" title="Select relevent competition" name="competition" onchange="update_matches()">
+                {% for comp in competitions %}
+                <option value="{{ comp[0] }}" {% if selected_competition == comp[0] %}  selected {% endif %}>{{ comp[0] }}</option>
+                {% endfor %}
+                <option value="new_competition">New Competition</option>
+            </select>
+            </th>
+            <th>
+                <select id="match_select" title="Select match in competition" name="match_id" onchange="update_distance()"></select>
+            </th>
+            <th>
+                <h3 id="distance"></h3>
+            </th>
+            <th id="match_date">
+                <input type="date" name="match_date" id="date_picker" title="Select date of match and scores" value="" required>
+            </th>
+        </tr>
+    </table>
+    <p>Past CSV of match scores</p>
+    <textarea id="csv_text" name="csv_text" rows="10" cols="50" placeholder="Paste CSV here" required></textarea>
+    <input type="submit" value="Submit" title="Submit scores">
+    <input type="reset" value="Reset" title="Reset">
+</form>
+<h2>Bulk Add New shooters</h2>
+<form method="post" action="{{ url_for('bulk_add_shooter') }}" enctype="multipart/form-data">
+    <p>Format:</p>
+    <ul>Last Name</ul>
+    <ul>First Name/Inital</ul>
+    <textarea id="csv_text" name="csv_text" rows="10" cols="50" placeholder="Paste CSV here" required></textarea>
+    <input type="submit" value="Submit" title="Submit scores">
+    <input type="reset" value="Reset" title="Reset">
+</form>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+    //Store selected competition in session storage to be used when reloading page
+    window.onload = function () {
+        var selected_comp = sessionStorage.getItem("selected_comp");
+        document.getElementById("competition_select").value = selected_comp;
+        document.getElementById("competition_select").addEventListener("change", function () {
+            var selval = this.value;
+            if (selval == "new_competition") {return} //If new competition is selected, do nothing
+            sessionStorage.setItem("selected_comp", selval);
+        })
+        get_competition_matches()
+    }
+    document.getElementById('date_picker').value = toDateInputValue(new Date())
+</script>
+{% endblock %}

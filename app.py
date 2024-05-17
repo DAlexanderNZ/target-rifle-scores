@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, Response, flash
+from flask import Flask, render_template, request, Response, redirect
 from database import database
 from datetime import date
 import json
@@ -79,6 +79,51 @@ def add_score():
 
     return render_template('addscore.html', competitions=competitions, classes=classes, match_type=default_match)
 
+@app.route('/bulkaddscore', methods=['GET'])
+def bulk_add_score_page():
+    competitions = db.get_competitions()
+    return render_template('bulkaddscore.html', competitions=competitions)
+
+def bulk_scores_to_list(competition, match_id, date, scores):
+    lines = scores.split('\n')
+    lines.pop(0)
+    results = []
+    for line in lines:
+        if line != '':
+            line = line.replace('\r', '')
+            items = line.split(',')
+            items[4] = [*items[4]]
+            items.append(competition)
+            items.append(match_id)
+            items.append(date)
+            results.append(items)
+    return results
+
+@app.route('/bulkaddscore', methods=['POST'])
+def bulk_add_score():
+    #Submitted data
+    competition = request.form['competition']
+    match_id = request.form['match_id']
+    date = request.form['match_date']
+    data = request.form['csv_text']
+    bulk_scores = bulk_scores_to_list(competition, match_id, date, data)
+
+    print(bulk_scores)
+    db.bulk_record_scores(bulk_scores)
+
+    return redirect(request.referrer)
+
+def string_to_lists(string):
+    lines = string.split('\n')
+    return [line.replace('\r', '').split(',') for line in lines]
+
+@app.route('/bulkaddshooter', methods=['POST'])
+def bulk_add_shooter():
+    shooters = request.form['csv_text']
+    shooters = string_to_lists(shooters)
+    db.bulk_create_shooters(shooters)
+    return redirect(request.referrer)
+
 @app.route('/addmatchcomp', methods=['GET'])
 def add_match_comp_page():
     competitions = db.get_competitions()
@@ -86,7 +131,6 @@ def add_match_comp_page():
 
 @app.route('/addcomp', methods=['POST'])
 def add_comp():
-    competitions = db.get_competitions()
     #Handle form submission
     new_competition = request.form['new_competition']
     new_competition_desc = request.form['new_competition_desc']
@@ -94,11 +138,10 @@ def add_comp():
     db.record_new_competition(new_comp)
 
     selected_competition = new_competition
-    return render_template('addmatchcomp.html', competitions=competitions, selected_competition=selected_competition)
+    return redirect(request.referrer)
 
 @app.route('/addmatch', methods=['POST'])
 def add_match():
-    competitions = db.get_competitions()
     if request.method == 'POST':
         #Handle form submission
         competition = request.form['competition']
@@ -118,7 +161,7 @@ def add_match():
     else:
         selected_competition = ''
 
-    return render_template('addmatchcomp.html', competitions=competitions, selected_competition=selected_competition)
+    return redirect(request.referrer)
 
 @app.route('/removematch', methods=['POST'])
 def remove_match():
@@ -161,7 +204,7 @@ def add_shooter_sub():
     print(f'Submited new shooter: {new_shooter}')
     db.create_shooter(new_shooter)
 
-    return render_template('addshooter.html')
+    return redirect(request.referrer)
 
 if __name__ == '__main__':
     app.run(debug=True)

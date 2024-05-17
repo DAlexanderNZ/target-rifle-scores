@@ -198,6 +198,25 @@ class database():
             query = "INSERT INTO score (shooter_id, competition, match_id, shots, shot_type, total, class, date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
             cur.execute(query, score)
         self.conn.commit()
+    
+    def bulk_record_scores(self, scores):
+        """
+        Record scores for shooters in a match
+        :param scores: a list of dictionaries of score attributes [shooter_last_name, shooter_first_name, class shots, total, competition, match_id, date]
+        """
+        last_name = []
+        first_name = []
+        for score in scores:
+            last_name.append(score[0])
+            first_name.append(score[1])
+        try:
+            with self.conn.cursor() as cur:
+                query = """SELECT shooter_id FROM shooter WHERE shooter_last_name = %s and shooter_first_name = %s;"""
+                cur.execute(query, (last_name, first_name,))
+                shooter_ids = cur.fetchall()
+                print(shooter_ids)
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'bulk_record_scores: {error}')
 
     def record_new_competition(self, competition):
         """ Record a new competition in the database """
@@ -334,11 +353,23 @@ class database():
         try:
             with self.conn.cursor() as cur:
                 query = "INSERT INTO shooter (shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob"")VALUES (%s, %s, %s, %s);"
-                print
                 cur.execute(query, shooter)
             self.conn.commit()
         except (Exception, psycopg.DatabaseError) as error:
             print(f'create_shooter: {error}')
+
+    def bulk_create_shooters(self, shooters):
+        """ 
+        Create multiple shooters 
+        :param shooters: a list of dictionaries of shooter attributes [shooter_last_name, shooter_first_name]
+        """
+        try:
+            with self.conn.cursor() as cur:
+                query = "INSERT INTO shooter (shooter_last_name, shooter_first_name) VALUES (%s, %s);"
+                cur.executemany(query, shooters)
+            self.conn.commit()
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'bulk_create_shooters: {error}')
 
     #
     #   First time database setup functions
