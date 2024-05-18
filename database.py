@@ -202,19 +202,27 @@ class database():
     def bulk_record_scores(self, scores):
         """
         Record scores for shooters in a match
-        :param scores: a list of dictionaries of score attributes [shooter_last_name, shooter_first_name, class shots, total, competition, match_id, date]
+        :param scores: a list of dictionaries of score attributes [shooter_last_name, shooter_first_name, class, shots, total, competition, match_id, date]
         """
-        last_name = []
-        first_name = []
-        for score in scores:
-            last_name.append(score[0])
-            first_name.append(score[1])
         try:
             with self.conn.cursor() as cur:
-                query = """SELECT shooter_id FROM shooter WHERE shooter_last_name = %s and shooter_first_name = %s;"""
-                cur.execute(query, (last_name, first_name,))
-                shooter_ids = cur.fetchall()
-                print(shooter_ids)
+                query = """
+                INSERT INTO score (shooter_id, class, shots, total, competition, match_id, date)
+                SELECT shooter.shooter_id, %s, %s, %s, %s, %s, %s
+                FROM shooter
+                WHERE shooter.shooter_last_name = %s AND shooter.shooter_first_name = %s;
+                """
+                for score in scores:
+                    shooter_class = score[2]
+                    shots = score[3]
+                    total = score[4]
+                    competition = score[5]
+                    match_id = score[6]
+                    date = score[7]
+                    shooter_last_name = score[0]
+                    shooter_first_name = score[1]
+                    cur.execute(query, (shooter_class, shots, total, competition, match_id, date, shooter_last_name, shooter_first_name))
+            self.conn.commit()
         except (Exception, psycopg.DatabaseError) as error:
             print(f'bulk_record_scores: {error}')
 
@@ -475,6 +483,8 @@ class database():
                 CONSTRAINT class_fk FOREIGN KEY (class)
                     REFERENCES class (class)
                     ON DELETE CASCADE
+                CONSTRAINT uqu_score_match UNIQUE (shooter_id, competition, match_id)
+)
             )
             """
         )

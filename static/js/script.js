@@ -494,11 +494,16 @@ function create_tables_for_classes(data, unique_classes) {
                             let shot = document.createElement('span')
                             shot.className = 'shot'
                             //If a sighter is not converted mark it for css with another span
-                            if (i < item[4].length){
-                                let sighter = document.createElement('span')
-                                sighter.className = 'converted'
-                                sighter.textContent = cell[i]
-                                shot.appendChild(sighter)
+                            //If the sighter type has no entries and is a null
+                            if (item[4 != null]){
+                                if (i < item[4].length){
+                                    let sighter = document.createElement('span')
+                                    sighter.className = 'converted'
+                                    sighter.textContent = cell[i]
+                                    shot.appendChild(sighter)
+                                } else {
+                                    shot.textContent = cell[i]
+                                }
                             } else {
                                 shot.textContent = cell[i]
                             }

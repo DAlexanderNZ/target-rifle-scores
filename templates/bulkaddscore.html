@@ -5,7 +5,6 @@
 <p>Pase a CSV file of scores to add to the database. The CSV should have the following columns:</p>
 <ul>Last Name</ul>
 <ul>First Name/Inital</ul>
-<ul>Club</ul>
 <ul>Countout</ul>
 <ul>Score</ul>
 <form method="post" action="{{ url_for('bulk_add_score') }}" enctype="multipart/form-data">
@@ -26,7 +25,7 @@
                 <h3 id="distance"></h3>
             </th>
             <th id="match_date">
-                <input type="date" name="match_date" id="date_picker" title="Select date of match and scores" value="" required>
+                <input type="date" name="match_date" id="date_picker" title="Select date of match and scores. Format: MM/DD/YYYY" value="" required>
             </th>
         </tr>
     </table>
