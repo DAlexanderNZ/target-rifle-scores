@@ -112,7 +112,7 @@ class database():
         """ Get the results for a match in a competition from the database """
         try:
             with self.conn.cursor() as cur:
-                #Get the score total values and related infomation in the format [shooter_name, class, shots, shot_type total]
+                #Get the score total values and related infomation in the format [last_name, first_name, class, shots, shot_type total]
                 query = """
                 SELECT shooter.shooter_last_name, shooter.shooter_first_name, score.class, score.shots, score.shot_type, score.total
                 FROM score
@@ -122,8 +122,9 @@ class database():
                 score.total DESC;
                 """
                 cur.execute(query, (match_id, self.classes))
-                results = cur.fetchall()
-                return results
+                scores = cur.fetchall()
+                scores = self.replace_v_x(scores, 3)
+                return scores
         except (Exception, psycopg.DatabaseError) as error:
             print(f'get_comp_results: {error}')
 

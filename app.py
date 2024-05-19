@@ -44,9 +44,9 @@ def comp_results():
 @app.route('/getcompresults', methods=['POST'])
 def get_comp_results():
     match_id = request.json['match']
-    if match_id == '':
-        print(match_id)
-        return 404
+    #Return code 400 if the request didn't send a match_id
+    if len(match_id) < 1:
+        return redirect(request.referrer, 400)
     results = db.get_comp_results(match_id)
     return Response(json.dumps(results, default=json_serial), mimetype='application/json')
 
@@ -93,9 +93,17 @@ def bulk_scores_to_list(competition, match_id, date, scores):
     results = []
     for line in lines:
         if len(line) != 0:
+            print(line)
             line = line.replace('\r', '')
             items = line.split(',')
+            #Format shots to expected format
             items[3] = [*items[3]]
+            for i, score in enumerate(items[3]):
+                if score == 'V':
+                    items[3][i] = 5.001
+                elif score == 'X':
+                    items[3][i] = 6.001
+            print(items)
             items.append(competition)
             items.append(match_id)
             items.append(date)

@@ -100,38 +100,45 @@ function shooter_name_suggestions(row_id){
 
 
 let matches
-function get_competition_matches(){
+async function get_competition_matches(){
     let competition = document.getElementById('competition_select').value
     console.log(competition)
-    fetch("/getmatches", {
-        method: "POST",
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({competition: competition})
-    })
-    .then(response => response.json()) // Convert the response to JSON
-    .then(data => {
-        matches = data // Store the data in matches
-        console.log("Gathered matches for ", matches) // Log the matches
-        //Create options for match_select
-        let match_select = document.getElementById('match_select')
-        match_select.options.length = 0 //Clear existing options
-        match_select.onchange = function () {add_new_match_option()}
-        for (let i = 0; i < matches.length; i++){
-            let match_option = document.createElement('option')
-            match_option.id = matches[i][2] //Distance
-            match_option.value = matches[i][0] //match_id
-            match_option.textContent = matches[i][1] //match_name
-            match_select.append(match_option)
-        }
-        //Create new match option
-        let new_match_option = document.createElement('option')
-        new_match_option.id = 'new_match'
-        new_match_option.value = 'new_match'
-        new_match_option.textContent = 'New Match'
-        match_select.append(new_match_option)
-        update_distance() //Update the distance to the selected match       
-    })
-    .catch(error => console.error('Error:', error)) // Log any errors
+
+    try {
+        fetch("/getmatches", {
+            method: "POST",
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({competition: competition})
+        })
+        .then(response => response.json()) // Convert the response to JSON
+        .then(data => {
+            matches = data // Store the data in matches
+            console.log("Gathered matches for ", matches) // Log the matches
+            //Create options for match_select
+            let match_select = document.getElementById('match_select')
+            match_select.options.length = 0 //Clear existing options
+            //Only add this option on pages that allow for adding of scores
+            if (document.getElementById('add_score')){
+                match_select.onchange = function () {add_new_match_option()}
+            }
+            for (let i = 0; i < matches.length; i++){
+                let match_option = document.createElement('option')
+                match_option.id = matches[i][2] //Distance
+                match_option.value = matches[i][0] //match_id
+                match_option.textContent = matches[i][1] //match_name
+                match_select.append(match_option)
+            }
+            //Create new match option
+            let new_match_option = document.createElement('option')
+            new_match_option.id = 'new_match'
+            new_match_option.value = 'new_match'
+            new_match_option.textContent = 'New Match'
+            match_select.append(new_match_option)
+            update_distance() //Update the distance to the selected match       
+        })
+    } catch (error) {
+        console.error('get_competition_matches error: ', error) // Log any errors
+    }
 }
 
 function update_matches(){
@@ -445,19 +452,24 @@ function remove_match(match_row_id){
 
 //Display comp scores code:
 //Get scores for selected comp
-function show_competition_scores(){
+async function show_competition_scores(){
     let competition = document.getElementById('competition_select').value
-    fetch("/getcompscores", {
+
+    try {
+        fetch("/getcompscores", {
         method: "POST",
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({competition: competition})
-    })
-    .then(response => response.json())
-    .then(data => {
-        const unique_classes = [...new Set(data.map(item => item[1]))] //Get unique classes from the data
-        console.log(unique_classes)
-        create_tables_for_classes(data, unique_classes)
-    })
+            body: JSON.stringify({competition: competition})
+        })
+        .then(response => response.json())
+        .then(data => {
+            const unique_classes = [...new Set(data.map(item => item[1]))] //Get unique classes from the data
+            console.log(unique_classes)
+            create_tables_for_classes(data, unique_classes)
+        })
+    } catch (error) {
+        console.error('show_competition_scores error: ', error)
+    }
 }
 
 //Render the tables for the scores per grade.
@@ -526,20 +538,26 @@ function create_tables_for_classes(data, unique_classes) {
 }
 
 //Display comp result code:
-function show_competition_results(){
+//Displays a user selectable match in a competition split by grade
+async function show_competition_results(){
     let match = document.getElementById('match_select').value
-    console.log(match)
-    fetch("/getcompresults", {
-        method: "POST",
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({match: 12})
-    })
-    .then(response => response.json())
-    .then(data => {
-        const unique_classes = [...new Set(data.map(item => item[2]))]
-        console.log(unique_classes)
-        create_tables_for_results(data, unique_classes)
-    })
+    console.log('Comp match id: ' + match)
+
+    try {
+        fetch("/getcompresults", {
+            method: "POST",
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({match: match})
+        })
+        .then(response => response.json())
+        .then(data => {
+            const unique_classes = [...new Set(data.map(item => item[2]))]
+            console.log(unique_classes)
+            create_tables_for_results(data, unique_classes)
+        })
+    } catch (error) {
+        console.error('show_competition_results error: ', error)
+    }
 }
 
 function create_tables_for_results(data, unique_classes) {

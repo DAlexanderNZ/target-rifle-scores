@@ -3,14 +3,13 @@
 {% block content %}
 <h1>Competition Results</h1>
 Compeition:
-<select  id="competition_select" title="Select relevent competition" name="competition" onchange="update_matches()">
+<select  id="competition_select" title="Select relevent competition" name="competition" onchange="matchs_load()">
     {% for comp in competitions %}
     <option value="{{ comp[0] }}" {% if selected_competition == comp[0] %}  selected {% endif %}>{{ comp[0] }}</option>
     {% endfor %}
 </select>
 Match:
-<!-- Onchange for match_select is broken due to how add_new_match_option() is being asigned as an event to the select in get_competition_matches()-->
-<select id="match_select" title="Select match in competition" name="match_id" onchange="console.log('hello');"></select>
+<select id="match_select" title="Select match in competition" name="match_id" onchange="show_competition_results()"></select>
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 <script>
@@ -24,9 +23,14 @@ Match:
                 if (selval == "new_competition") {return} //If new competition is selected, do nothing
                 sessionStorage.setItem("selected_comp", selval);
             })
-            //TODO: call funtion to load scores totals by match for selected competition
-            get_competition_matches()
-            show_competition_results()
+            matchs_load()
         }
-</script>
+        async function matchs_load(){
+            await get_competition_matches()
+            //Wait for get_competition_matches() to finish before calling show_competition_results()
+            //TODO: Check that match_select is updated with options before calling show_competition_results()
+            await new Promise( resolve => setTimeout(resolve, 600)) 
+            await show_competition_results()
+        }
+    </script>
 {% endblock %}
