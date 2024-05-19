@@ -108,22 +108,20 @@ class database():
         except (Exception, psycopg.DatabaseError) as error:
             print(f'get_comp_scores: {error}')
 
-    def get_comp_results(self, competition):
-        """ Get the results for a competition from the database """
+    def get_comp_results(self, match_id):
+        """ Get the results for a match in a competition from the database """
         try:
             with self.conn.cursor() as cur:
-                #Get the score total values and related infomation in the format [shooter_name, class, match_name, total, date]
+                #Get the score total values and related infomation in the format [shooter_name, class, shots, shot_type total]
                 query = """
-                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, match.match_name, score.total, score.date
+                SELECT shooter.shooter_last_name, shooter.shooter_first_name, score.class, score.shots, score.shot_type, score.total
                 FROM score
                 INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
-                INNER JOIN match ON  score.match_id = match.match_id
-                LEFT JOIN class ON score.class = class.class
-                WHERE score.competition = %s
-                ORDER BY match.match_name, 
-                array_position(ARRAY[%s], score.class);
+                WHERE score.match_id = %s
+                ORDER BY array_position(ARRAY[%s], score.class),
+                score.total DESC;
                 """
-                cur.execute(query, (competition, self.classes))
+                cur.execute(query, (match_id, self.classes))
                 results = cur.fetchall()
                 return results
         except (Exception, psycopg.DatabaseError) as error:
@@ -483,8 +481,7 @@ class database():
                 CONSTRAINT class_fk FOREIGN KEY (class)
                     REFERENCES class (class)
                     ON DELETE CASCADE
-                CONSTRAINT uqu_score_match UNIQUE (shooter_id, competition, match_id)
-)
+                CONSTRAINT unique_score_match UNIQUE (shooter_id, competition, match_id)
             )
             """
         )

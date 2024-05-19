@@ -152,11 +152,13 @@ function update_match_descriptions(){
 
 //TODO: Also update shots selects with sighters and counters (matches[i][4], matches[i][3])
 function update_distance(){
-    let match_distance = document.getElementById('match_select')
-    match_distance = match_distance[match_distance.selectedIndex].id //Get id of selected option
-    let distance = document.getElementById('distance')
-    distance.value = match_distance
-    distance.textContent = match_distance
+    if (document.getElementById('distance')){
+        let match_distance = document.getElementById('match_select')
+        match_distance = match_distance[match_distance.selectedIndex].id //Get id of selected option
+        let distance = document.getElementById('distance')
+        distance.value = match_distance
+        distance.textContent = match_distance
+    }
 }
 
 
@@ -525,33 +527,22 @@ function create_tables_for_classes(data, unique_classes) {
 
 //Display comp result code:
 function show_competition_results(){
-    let competition = document.getElementById('competition_select').value
+    let match = document.getElementById('match_select').value
+    console.log(match)
     fetch("/getcompresults", {
         method: "POST",
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({competition: competition})
+        body: JSON.stringify({match: 12})
     })
     .then(response => response.json())
     .then(data => {
-        const unique_classes = [...new Set(data.map(item => item[1]))]
+        const unique_classes = [...new Set(data.map(item => item[2]))]
         console.log(unique_classes)
         create_tables_for_results(data, unique_classes)
     })
 }
 
 function create_tables_for_results(data, unique_classes) {
-    //Map results data
-    //Data format [shooter_name, class, match_name, total, date]
-    let dataMap =  new Map()
-    data.forEach(function (item) {
-        if (dataMap.has(item[0])){
-            dataMap.get(item[0]).push([item[1], item[2], item[3], item[4]])
-        } else {
-            dataMap.set(item[0], [[item[1], item[2], item[3], item[4]]])
-        }
-    })
-    console.log(dataMap)
-
     //Clear previous tables. Rapper Div to make this easy
     if (document.getElementById('results')){
         document.getElementById('results').remove()
@@ -560,20 +551,57 @@ function create_tables_for_results(data, unique_classes) {
     table_div.id = 'results'
     //Create new tables
     let table = document.createElement('table')
-    table.id = 'results_table'
-    let thead = document.createElement('thead')
-    //Create table header
-    let header_row = document.createElement('tr')
-    header_row.appendChild(document.createElement('th').textContent = 'Name')
-    //Find unique matches
-    let unique_matches = [...new Set(data.map(item => item[2]))]
-    unique_matches.forEach(function (match) {
-        header_row.appendChild(document.createElement('th').textContent = match)
+    table.title = 'Match Results'
+    //For each Class in the match
+    unique_classes.forEach((class_type) => {
+        let thead = document.createElement('thead')
+        let header_row = document.createElement('tr');
+        ['Last Name', 'First Name/Inital', 'Class', 'Shots', 'Total'].forEach((header) => {
+            let th = document.createElement('th')
+            th.textContent = header
+            header_row.appendChild(th)
+        })
+        thead.appendChild(header_row)
+        table.appendChild(thead)
+        let tbody = document.createElement('tbody')
+        data.forEach(function (item) {
+            if (item[2] == class_type){
+                let tr = document.createElement('tr')
+                item.forEach((cell, index) => {
+                    if (index !== 4){
+                        //Get data for rows displayed ['Last Name', 'First Name/Inital', 'Class', 'Shots', 'Total']
+                        let td = document.createElement('td')
+                        if (index === 3){
+                            for (let i = 0; i < cell.length; i++){
+                                let shot = document.createElement('span')
+                                shot.className = 'shot'
+                                //If a sighter is not converted mark it for css with another span
+                                //If the sighter type has no entries and is a null
+                                if (item[4 != null]){
+                                    if (i < item[4].length){
+                                        let sighter = document.createElement('span')
+                                        sighter.className = 'converted'
+                                        sighter.textContent = cell[i]
+                                        shot.appendChild(sighter)
+                                    } else {
+                                        shot.textContent = cell[i]
+                                    }
+                                } else {
+                                    shot.textContent = cell[i]
+                                }
+                                td.appendChild(shot)
+                            }
+                        } else { //Else display just display data
+                            td.textContent = cell
+                        }
+                        tr.appendChild(td)
+                    }
+                })
+                tbody.appendChild(tr)
+            }
+        })
+        table.appendChild(tbody)        
     })
-    thead.appendChild(header_row)
-    table.appendChild(thead)
-    //Table Body
-    let tbody = document.createElement('tbody')
 
 
     table_div.appendChild(table)

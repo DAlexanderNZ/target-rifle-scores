@@ -43,8 +43,11 @@ def comp_results():
 
 @app.route('/getcompresults', methods=['POST'])
 def get_comp_results():
-    competition = request.json['competition'].strip()
-    results = db.get_comp_results(competition)
+    match_id = request.json['match']
+    if match_id == '':
+        print(match_id)
+        return 404
+    results = db.get_comp_results(match_id)
     return Response(json.dumps(results, default=json_serial), mimetype='application/json')
 
 #Routes for adding scores, matchs and competitions
