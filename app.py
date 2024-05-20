@@ -217,5 +217,31 @@ def add_shooter_sub():
 
     return redirect(request.referrer)
 
+#Routes for user accounts
+@app.route('/register', methods=['GET'])
+def register():
+    return render_template('register.html')
+
+@app.route('/register', methods=['POST'])
+def register_sub():
+    username = request.form['username']
+    password = request.form['password']
+    email = request.form['email']
+    #TODO: DB insert
+
+    return redirect(request.referrer)
+
+@app.route('/login', methods=['GET'])
+def login():
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
+def login_sub():
+    username = request.form['username']
+    password = request.form['password']
+    #TODO: DB check
+    return redirect(request.referrer)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
