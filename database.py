@@ -288,7 +288,7 @@ class database():
         password_hash = bcrypt.hashpw(new_user['password'].encode('utf-8'), bcrypt.gensalt())
         try:
             with self.conn.cursor() as cur:
-                query = "INSERT INTO users (email, password_hash, first_name, last_name) VALUES (%s, %s, %s, %s); RETURNING id;"
+                query = "INSERT INTO users (email, password_hash, first_name, last_name) VALUES (%s, %s, %s, %s) RETURNING id;"
                 cur.execute(query, (new_user['email'], password_hash, new_user['first_name'], new_user['last_name']))
                 user_id = cur.fetchone()[0]
                 query = "INSERT INTO user_edit_log (user_id) VALUES (%s);"
@@ -483,6 +483,21 @@ class database():
                     REFERENCES class (class)
                     ON DELETE CASCADE
                 CONSTRAINT unique_score_match UNIQUE (shooter_id, competition, match_id)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS user (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                email VARCHAR UNIQUE,
+                password_hash VARCHAR,
+                first_name VARCHAR,
+                last_name VARCHAR
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXITS user_edit_log (
+                user_id FOREIGN KEY REFERENCES user (id),
+                edited_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
         )

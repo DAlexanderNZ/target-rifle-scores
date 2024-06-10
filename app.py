@@ -1,9 +1,13 @@
-from flask import Flask, render_template, request, Response, redirect
+from flask import Flask, render_template, request, Response, redirect, flash
 from database import database
 from datetime import date
 import json
+import secrets
 
 app = Flask(__name__)
+#New App Secret key on start. Needs to be a stored key for production
+SECRET_KEY = secrets.token_hex(16)
+app.secret_key = SECRET_KEY
 db = database()
 
 @app.route('/')
@@ -224,11 +228,14 @@ def register():
 
 @app.route('/register', methods=['POST'])
 def register_sub():
-    username = request.form['username']
-    password = request.form['password']
     email = request.form['email']
-    #TODO: DB insert
-
+    password = request.form['password']
+    first_name = request.form['first_name']
+    last_name = request.form['last_name']
+    #TODO: Check existing user before creating user
+    new_user = {'email': email, 'password': password, 'first_name': first_name, 'last_name': last_name}
+    db.register_user(new_user)
+    flash(f'New user with email {email} has been registered')
     return redirect(request.referrer)
 
 @app.route('/login', methods=['GET'])
