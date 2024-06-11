@@ -134,7 +134,7 @@ def string_to_lists(string):
 
 @app.route('/bulkaddshooter', methods=['POST'])
 def bulk_add_shooter():
-    shooters = request.form['csv_text']
+    shooters = request.form['csv_text'].strip()
     shooters = string_to_lists(shooters)
     db.bulk_create_shooters(shooters)
     return redirect(request.referrer)

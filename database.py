@@ -481,12 +481,12 @@ class database():
                     ON DELETE CASCADE,
                 CONSTRAINT class_fk FOREIGN KEY (class)
                     REFERENCES class (class)
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE,
                 CONSTRAINT unique_score_match UNIQUE (shooter_id, competition, match_id)
             )
             """,
             """
-            CREATE TABLE IF NOT EXISTS user (
+            CREATE TABLE IF NOT EXISTS users (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 email VARCHAR UNIQUE,
                 password_hash VARCHAR,
@@ -495,9 +495,11 @@ class database():
             )
             """,
             """
-            CREATE TABLE IF NOT EXITS user_edit_log (
-                user_id FOREIGN KEY REFERENCES user (id),
-                edited_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            CREATE TABLE IF NOT EXISTS user_edit_log (
+                user_id UUID,
+                edited_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT user_edit_log_fk FOREIGN KEY (user_id) 
+                    REFERENCES users (id) 
             )
             """
         )
