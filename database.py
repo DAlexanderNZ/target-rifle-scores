@@ -288,7 +288,7 @@ class database():
         password_hash = bcrypt.hashpw(new_user['password'].encode('utf-8'), bcrypt.gensalt())
         try:
             with self.conn.cursor() as cur:
-                query = "INSERT INTO users (email, password_hash, user_first_name, user_last_name) VALUES (%s, %s, %s, %s) RETURNING id;"
+                query = "INSERT INTO users (email, password_hash, first_name, last_name) VALUES (%s, %s, %s, %s) RETURNING id;"
                 cur.execute(query, (new_user['email'], password_hash, new_user['first_name'], new_user['last_name']))
                 user_id = cur.fetchone()[0]
                 query = "INSERT INTO user_edit_log (user_id) VALUES (%s);"
