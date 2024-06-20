@@ -31,7 +31,6 @@
                         <button type="submit" class="btn btn-primary btn-block">Register</button>
                         <button type="reset">Clear</button>
                     </div>
-                    <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
                 </form>
                 <div class="container alert" id="flash_msgs">
                     {% with messages = get_flashed_messages(with_categories=True) %}
