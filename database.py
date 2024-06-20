@@ -288,7 +288,7 @@ class database():
         password_hash = bcrypt.hashpw(new_user['password'].encode('utf-8'), bcrypt.gensalt())
         try:
             with self.conn.cursor() as cur:
-                query = "INSERT INTO users (email, password_hash, first_name, last_name) VALUES (%s, %s, %s, %s) RETURNING id;"
+                query = "INSERT INTO users (email, password_hash, user_first_name, user_last_name) VALUES (%s, %s, %s, %s) RETURNING id;"
                 cur.execute(query, (new_user['email'], password_hash, new_user['first_name'], new_user['last_name']))
                 user_id = cur.fetchone()[0]
                 query = "INSERT INTO user_edit_log (user_id) VALUES (%s);"
@@ -301,7 +301,7 @@ class database():
         """ Verify a user's password """
         try:
             with self.conn.cursor() as cur:
-                query = "SELECT password FROM users WHERE email = %s;"
+                query = "SELECT password_hash FROM users WHERE email = %s;"
                 cur.execute(query, (user_email,))
                 password_hash = cur.fetchone()[0]
                 if bcrypt.checkpw(user_password.encode('utf-8'), password_hash):
@@ -313,6 +313,8 @@ class database():
 
     def get_user_id(self, user_email):
         """ Get a user from the database. Return None if user doesn't exist """
+        if user_email == "" or user_email is None:
+            return None
         try:
             with self.conn.cursor() as cur:
                 query = "SELECT id FROM users WHERE email = %s"
@@ -489,8 +491,8 @@ class database():
             CREATE TABLE IF NOT EXISTS users (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 email VARCHAR UNIQUE,
-                password_hash VARCHAR,
-                first_name VARCHAR,
+                password_hash BYTEA NOT NULL,
+                first_name VARCHAR NOT NULL,
                 last_name VARCHAR
             )
             """,

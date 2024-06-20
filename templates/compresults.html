@@ -26,7 +26,7 @@ Match:
             matchs_load()
         }
         async function matchs_load(){
-            await get_competition_matches()
+            await get_competition_matches(false)
             //Wait for get_competition_matches() to finish before calling show_competition_results()
             //TODO: Check that match_select is updated with options before calling show_competition_results()
             await new Promise( resolve => setTimeout(resolve, 600)) 

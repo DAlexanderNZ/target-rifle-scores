@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, Response, redirect, flash
+from flask_httpauth import HTTPBasicAuth
 from database import database
 from datetime import date
 import json
@@ -8,6 +9,7 @@ app = Flask(__name__)
 #New App Secret key on start. Needs to be a stored key for production
 SECRET_KEY = secrets.token_hex(16)
 app.secret_key = SECRET_KEY
+auth = HTTPBasicAuth()
 db = database()
 
 @app.route('/')
@@ -56,6 +58,7 @@ def get_comp_results():
 
 #Routes for adding scores, matchs and competitions
 @app.route('/addscore', methods=['GET'])
+@auth.login_required
 def add_score_page():
     competitions = db.get_competitions()
     classes = db.get_classes()
@@ -63,6 +66,7 @@ def add_score_page():
     return render_template('addscore.html', competitions=competitions, classes=classes, match_type=default_match)
 
 @app.route('/addscore', methods=['POST'])
+@auth.login_required
 def add_score():
     #Request data from database required for the page and data validation
     competitions = db.get_competitions()
@@ -87,6 +91,7 @@ def add_score():
     return render_template('addscore.html', competitions=competitions, classes=classes, match_type=default_match)
 
 @app.route('/bulkaddscore', methods=['GET'])
+@auth.login_required
 def bulk_add_score_page():
     competitions = db.get_competitions()
     return render_template('bulkaddscore.html', competitions=competitions)
@@ -115,6 +120,7 @@ def bulk_scores_to_list(competition, match_id, date, scores):
     return results
 
 @app.route('/bulkaddscore', methods=['POST'])
+@auth.login_required
 def bulk_add_score():
     #Submitted data
     competition = request.form['competition']
@@ -133,6 +139,7 @@ def string_to_lists(string):
     return [line.replace('\r', '').split(',') for line in lines]
 
 @app.route('/bulkaddshooter', methods=['POST'])
+@auth.login_required
 def bulk_add_shooter():
     shooters = request.form['csv_text'].strip()
     shooters = string_to_lists(shooters)
@@ -140,11 +147,13 @@ def bulk_add_shooter():
     return redirect(request.referrer)
 
 @app.route('/addmatchcomp', methods=['GET'])
+@auth.login_required
 def add_match_comp_page():
     competitions = db.get_competitions()
     return render_template('addmatchcomp.html', competitions=competitions)
 
 @app.route('/addcomp', methods=['POST'])
+@auth.login_required
 def add_comp():
     #Handle form submission
     new_competition = request.form['new_competition']
@@ -156,6 +165,7 @@ def add_comp():
     return redirect(request.referrer)
 
 @app.route('/addmatch', methods=['POST'])
+@auth.login_required
 def add_match():
     if request.method == 'POST':
         #Handle form submission
@@ -179,6 +189,7 @@ def add_match():
     return redirect(request.referrer)
 
 @app.route('/removematch', methods=['POST'])
+@auth.login_required
 def remove_match():
     """ Removes match from database if it has no scores """
     match_id = request.json['match_id']
@@ -201,10 +212,12 @@ def get_name_suggestion():
 
 #Routes for handling adding of shooters, clubs, etc
 @app.route('/addshooter', methods=['GET'])
+@auth.login_required
 def add_shooter():
     return render_template('addshooter.html')
 
 @app.route('/addshooter', methods=['POST'])
+@auth.login_required
 def add_shooter_sub():
     #Handle form submission
     first_name = request.form['first_name']
@@ -238,17 +251,14 @@ def register_sub():
     flash(f'New user with email {email} has been registered')
     return redirect(request.referrer)
 
-@app.route('/login', methods=['GET'])
-def login():
-    return render_template('login.html')
-
-@app.route('/login', methods=['POST'])
-def login_sub():
-    username = request.form['username']
-    password = request.form['password']
-    #TODO: DB check
-    return redirect(request.referrer)
-
+#Checks user email and password against users table for http basic auth
+@auth.verify_password
+def verify_password(email, password):
+    print(f'Verifying user {email}')
+    user = db.get_user_id(email)
+    if user != None:
+        if db.verify_user(email, password) == True:
+            return email
 
 if __name__ == '__main__':
     app.run(debug=True)

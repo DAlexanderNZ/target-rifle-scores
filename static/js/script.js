@@ -100,7 +100,7 @@ function shooter_name_suggestions(row_id){
 
 
 let matches
-async function get_competition_matches(){
+async function get_competition_matches(new_matchs = true){
     let competition = document.getElementById('competition_select').value
     console.log(competition)
 
@@ -129,11 +129,13 @@ async function get_competition_matches(){
                 match_select.append(match_option)
             }
             //Create new match option
-            let new_match_option = document.createElement('option')
-            new_match_option.id = 'new_match'
-            new_match_option.value = 'new_match'
-            new_match_option.textContent = 'New Match'
-            match_select.append(new_match_option)
+            if (new_matchs == true){
+                let new_match_option = document.createElement('option')
+                new_match_option.id = 'new_match'
+                new_match_option.value = 'new_match'
+                new_match_option.textContent = 'New Match'
+                match_select.append(new_match_option)
+            }
             update_distance() //Update the distance to the selected match       
         })
     } catch (error) {
