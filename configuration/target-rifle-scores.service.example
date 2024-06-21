@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn instance to serve target-rifle-scores
+After=network.target
+
+[Service]
+User=username
+Group=www-data
+WorkingDirectory=/home/username/target-rifle-scores-main
+Enviroment="PATH=/home/username/target-rifle-scores-main/bin"
+ExecStart=/home/username/target-rifle-scores-main/bin/gunicorn --workers 2 --bind unix:target-rifle-scores.sock -m 007 app:app
+
+[Install]
+WantedBy=multi-user.target
