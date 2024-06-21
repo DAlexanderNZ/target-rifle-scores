@@ -35,7 +35,7 @@
 9. Check that the application started without errors: `sudo systemctl status target-rifle-scores`
 10. Enable the application `sudo systemctl enable target-rifle-scores`
 
-### Nginx Poxry
+### Nginx Proxy
 Nginx is used to proxy requests to the application. This allows for easy use of Let's Encrypt SSL certificates via [Certbot](https://certbot.eff.org/instructions?ws=nginx&os=debianbuster)
 1. Install Nginx for your system
 2. Edit `configuration/target-rifle-scores.nginx.example` and change the hostname to your domain and the username in `proxy_pass` to your account username
