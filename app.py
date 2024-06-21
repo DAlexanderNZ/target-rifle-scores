@@ -109,9 +109,9 @@ def bulk_scores_to_list(competition, match_id, date, scores):
             items[3] = [*items[3]]
             for i, score in enumerate(items[3]):
                 if score == 'V':
-                    items[3][i] = 5.001
+                    items[3][i] = '5.001'
                 elif score == 'X':
-                    items[3][i] = 6.001
+                    items[3][i] = '6.001'
             print(items)
             items.append(competition)
             items.append(match_id)
