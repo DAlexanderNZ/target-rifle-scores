@@ -576,7 +576,7 @@ function create_tables_for_results(data, unique_classes) {
     unique_classes.forEach((class_type) => {
         let thead = document.createElement('thead')
         let header_row = document.createElement('tr');
-        ['Last Name', 'First Name/Inital', 'Class', 'Shots', 'Total'].forEach((header) => {
+        ['Pos','Last Name', 'First Name/Inital', 'Class', 'Shots', 'Total'].forEach((header) => {
             let th = document.createElement('th')
             th.textContent = header
             header_row.appendChild(th)
@@ -584,9 +584,13 @@ function create_tables_for_results(data, unique_classes) {
         thead.appendChild(header_row)
         table.appendChild(thead)
         let tbody = document.createElement('tbody')
-        data.forEach(function (item) {
+        data.forEach(function (item, index) {
             if (item[2] == class_type){
                 let tr = document.createElement('tr')
+                //Display the rows position in the pos column
+                let pos = document.createElement('td')
+                pos.textContent = index + 1
+                tr.appendChild(pos)
                 item.forEach((cell, index) => {
                     if (index !== 4){
                         //Get data for rows displayed ['Last Name', 'First Name/Inital', 'Class', 'Shots', 'Total']
