@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, Response, redirect, flash
+from flask import Flask, render_template, request, Response, redirect, flash, send_from_directory
 from flask_httpauth import HTTPBasicAuth
 from database import database
 from datetime import date
@@ -15,14 +15,31 @@ db = database()
 @app.route('/')
 def index():
     #TODO: Create proper index page. Show highlighted results from recent matchs
-    scores = db.get_all_scores()
-    return render_template('allscores.html', results=scores)
+    #scores = db.get_all_scores()
+    #return render_template('allscores.html', results=scores)
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def static_proxy(path):
+    return send_from_directory(app.static_folder, path)
+
+@app.route('/api/message')
+def get_message():
+    return Response(json.dumps({'message': 'Hello from Flask!'}), mimetype='application/json')
 
 #Routes for score display and submision
-@app.route('/allscores')
-def all_scores():
+#@app.route('/allscores')
+#def all_scores():
+#    scores = db.get_all_scores()
+#    return render_template('allscores.html', results=scores)
+
+@app.route('/api/allscores')
+def api_all_scores():
     scores = db.get_all_scores()
-    return render_template('allscores.html', results=scores)
+    if len(scores) == 0:
+        #If no scores are found, return code 204 No Content
+        return redirect(request.referrer, 204)
+    return Response(json.dumps(scores, default=json_serial), mimetype='application/json')
 
 #Display all scores by split by match and then by class
 @app.route('/compscores', methods=['GET'])

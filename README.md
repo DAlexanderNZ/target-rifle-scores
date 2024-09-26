@@ -45,3 +45,6 @@ Nginx is used to proxy requests to the application. This allows for easy use of 
 6. Follow [Certbot](https://certbot.eff.org/instructions?ws=nginx&os=debianbuster) instructions to install a certificate for your domain and configure nginx to use it
 7. Restart nginx: `sudo systemctl restart nginx` 
 
+### Front End
+The new front end is built with Vue.js and is served by the Flask application. To build the front end go to the frontend repo and run `npm run build`. Copy the contents of the `dist` directory to the `static` directory in the Flask app. The front end will be served by the Flask app.
+The Flask templates will be removed at a later date.

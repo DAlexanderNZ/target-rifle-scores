@@ -168,3 +168,7 @@ cython_debug/
 
 #Dev files
 *.sql
+
+#Vue.js files
+static/assets/*
+static/index.html

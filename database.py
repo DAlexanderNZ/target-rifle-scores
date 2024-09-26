@@ -73,8 +73,14 @@ class database():
         try:
             with self.conn.cursor() as cur:
                 #Get the score values and related infomation in the format [shooter_name, class, competition, match_name, shots, shot_type, total, date]
+                #The array() function is used to convert rows with shot_type == null to a false boolean value
                 cur.execute("""
-                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, score.competition, match.match_name, score.shots, score.shot_type, score.total, score.date
+                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, score.competition, match.match_name, score.shots,
+                            array(
+                                SELECT COALESCE(elem, false)
+                                FROM unnest(score.shot_type) AS elem
+                            ) as shot_type, 
+                            score.total, score.date
                 FROM score
                 INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
                 INNER JOIN match ON  score.match_id = match.match_id;
