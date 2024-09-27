@@ -23,23 +23,47 @@ def index():
 def static_proxy(path):
     return send_from_directory(app.static_folder, path)
 
-@app.route('/api/message')
+@app.route('/api/message', methods=['GET'])
 def get_message():
     return Response(json.dumps({'message': 'Hello from Flask!'}), mimetype='application/json')
 
-#Routes for score display and submision
-#@app.route('/allscores')
-#def all_scores():
-#    scores = db.get_all_scores()
-#    return render_template('allscores.html', results=scores)
-
-@app.route('/api/allscores')
+@app.route('/api/allscores', methods=['GET'])
 def api_all_scores():
     scores = db.get_all_scores()
     if len(scores) == 0:
         #If no scores are found, return code 204 No Content
         return redirect(request.referrer, 204)
     return Response(json.dumps(scores, default=json_serial), mimetype='application/json')
+
+@app.route('/api/competitions', methods=['GET'])
+def api_competitions():
+    """ Get all competitions in the database """
+    competitions = db.get_competitions()
+    return Response(json.dumps(competitions), mimetype='application/json')
+
+@app.route('/api/matches', methods=['POST'])
+def api_matches():
+    """ Get all matches in a competition. Expected JSON format: {"competition": "competition_name"} """
+    competition = request.get_json().get('competition')
+    matches = db.get_matches(competition)
+    return Response(json.dumps(matches), mimetype='application/json')
+
+@app.route('/api/matchscores', methods=['POST'])
+def api_match_scores():
+    """ Get all scores for a match by match_id. Expected JSON format: {"match": "match_id"} """
+    match_id = request.get_json().get('match')
+    scores = db.get_match_scores(match_id)
+    return Response(json.dumps(scores, default=json_serial), mimetype='application/json')
+
+#
+# Old flask template routes
+#
+
+#Routes for score display and submision
+#@app.route('/allscores')
+#def all_scores():
+#    scores = db.get_all_scores()
+#    return render_template('allscores.html', results=scores)
 
 #Display all scores by split by match and then by class
 @app.route('/compscores', methods=['GET'])
@@ -70,7 +94,7 @@ def get_comp_results():
     #Return code 400 if the request didn't send a match_id
     if len(match_id) < 1:
         return redirect(request.referrer, 400)
-    results = db.get_comp_results(match_id)
+    results = db.get_match_scores(match_id)
     return Response(json.dumps(results, default=json_serial), mimetype='application/json')
 
 #Routes for adding scores, matchs and competitions

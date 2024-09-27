@@ -59,7 +59,7 @@ class database():
 
     @staticmethod
     def replace_v_x(scores, score_pos):
-        """ Replace 5.001 with V and 6.001 with X in the scores list when returning scores to display """
+        """ Replace 5.001 with V and 6.001 with X in the scores list when returning scores to display. """
         for score in scores:
             for i, shot in enumerate(score[score_pos]):
                 if shot == '5.001':
@@ -67,6 +67,11 @@ class database():
                 elif shot == '6.001':
                     score[score_pos][i] = 'X'
         return scores
+    
+    @staticmethod
+    def count_back_scores(scores):
+        """ Sort scores by total and count back the scores on shots where the total is equal """
+        return sorted(scores, key=lambda x: (x[5], [y for y in reversed(x[3])]), reverse=True )
     
     def get_all_scores(self):
         """ Get all scores from the database """
@@ -98,7 +103,12 @@ class database():
             with self.conn.cursor() as cur:
                 #Get the score values and related infomation in the format [shooter_name, class, match_name, shots, shot_type, total, date]
                 query = """
-                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, match.match_name, score.shots, score.shot_type, score.total, score.date
+                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, match.match_name, score.shots,
+                            array(
+                                SELECT COALESCE(elem, false)
+                                FROM unnest(score.shot_type) AS elem
+                            ) as shot_type,
+                            score.total, score.date
                 FROM score
                 INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
                 INNER JOIN match ON  score.match_id = match.match_id
@@ -114,13 +124,18 @@ class database():
         except (Exception, psycopg.DatabaseError) as error:
             print(f'get_comp_scores: {error}')
 
-    def get_comp_results(self, match_id):
+    def get_match_scores(self, match_id):
         """ Get the results for a match in a competition from the database """
         try:
             with self.conn.cursor() as cur:
                 #Get the score total values and related infomation in the format [last_name, first_name, class, shots, shot_type total]
                 query = """
-                SELECT shooter.shooter_last_name, shooter.shooter_first_name, score.class, score.shots, score.shot_type, score.total
+                SELECT shooter.shooter_last_name, shooter.shooter_first_name, score.class, score.shots, 
+                            array(
+                                SELECT COALESCE(elem, false)
+                                FROM unnest(score.shot_type) AS elem
+                            ) as shot_type, 
+                            score.total
                 FROM score
                 INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
                 WHERE score.match_id = %s
@@ -129,6 +144,8 @@ class database():
                 """
                 cur.execute(query, (match_id, self.classes))
                 scores = cur.fetchall()
+                print(scores)
+                scores = self.count_back_scores(scores)
                 scores = self.replace_v_x(scores, 3)
                 return scores
         except (Exception, psycopg.DatabaseError) as error:
@@ -146,6 +163,7 @@ class database():
 
     def get_matches(self, competition):
         """ Get the matches for a competition from the database """
+        #Get the match values and related infomation in the format [match_id, match_name, match_distance, match_counters, match_sighters, description]
         try:
             with self.conn.cursor() as cur:
                 query = """
