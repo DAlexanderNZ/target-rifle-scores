@@ -78,7 +78,7 @@ class database():
         try:
             with self.conn.cursor() as cur:
                 #Get the score values and related infomation in the format [shooter_name, class, competition, match_name, shots, shot_type, total, date]
-                #The array() function is used to convert rows with shot_type == null to a false boolean value
+                #The array() function is used to convert rows with shot_type == null to a an empty array
                 cur.execute("""
                 SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, score.competition, match.match_name, score.shots,
                             array(
@@ -144,7 +144,6 @@ class database():
                 """
                 cur.execute(query, (match_id, self.classes))
                 scores = cur.fetchall()
-                print(scores)
                 scores = self.count_back_scores(scores)
                 scores = self.replace_v_x(scores, 3)
                 return scores
@@ -186,12 +185,11 @@ class database():
         """ Get the classes from the database """
         try:
             with self.conn.cursor() as cur:
-                cur.execute("SELECT class, name FROM class")
+                cur.execute("SELECT class, score_type, name FROM class")
                 classes = cur.fetchall()
                 return classes
         except (Exception, psycopg.DatabaseError) as error:
             print(f'get_classes: {error}')
-            return None
 
     def get_name_suggestions(self, name):
         """ Get a list of name suggestions from the shooter table """

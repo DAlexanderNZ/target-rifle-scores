@@ -35,6 +35,7 @@ def api_all_scores():
         return redirect(request.referrer, 204)
     return Response(json.dumps(scores, default=json_serial), mimetype='application/json')
 
+#TODO: Add short term caching to API routes to reduce database load and improve performance under heavy load
 @app.route('/api/competitions', methods=['GET'])
 def api_competitions():
     """ Get all competitions in the database """
@@ -47,6 +48,12 @@ def api_matches():
     competition = request.get_json().get('competition')
     matches = db.get_matches(competition)
     return Response(json.dumps(matches), mimetype='application/json')
+
+@app.route('/api/classtypes', methods=['GET'])
+def api_class_types():
+    """ Get all class types in the database """
+    classes = db.get_classes()
+    return Response(json.dumps(classes), mimetype='application/json')
 
 @app.route('/api/matchscores', methods=['POST'])
 def api_match_scores():
