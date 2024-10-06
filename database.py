@@ -1,6 +1,8 @@
 from configparser import ConfigParser
 import bcrypt
 import psycopg
+from itertools import groupby
+from operator import itemgetter
 
 class database():
     """ Postgresql database class using psycopg3 """
@@ -123,6 +125,46 @@ class database():
                 return scores
         except (Exception, psycopg.DatabaseError) as error:
             print(f'get_comp_scores: {error}')
+
+    def get_comp_totals(self, competition):
+        """ Get the total scores for a competition from the database """
+        try:
+            with self.conn.cursor() as cur:
+                #Get the score total values and related infomation in the format [shooter_name, class, total, match_name]
+                query = """
+                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, score.total, match.match_name
+                FROM score
+                INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
+                INNER JOIN match ON score.match_id = match.match_id
+                INNER JOIN competition_match cm ON match.match_id = cm.match_id
+                INNER JOIN competition comp on cm.competition =  comp.competition
+                WHERE comp.competition = %s;
+                """
+                cur.execute(query, (competition,))
+                scores = cur.fetchall()
+                #Sort data into a pvot table format for display
+                #TODO: Apply count back rules to scores
+                pivoted_data = {}
+                for shooter_name, class_name, total, match_name in scores:
+                    if shooter_name not in pivoted_data:
+                        pivoted_data[shooter_name] = {'class': class_name, 'total_score': 0}
+                    #Only Add the first score if duplicate scores are present. Should this duplication be logged and reported?
+                    if match_name not in pivoted_data[shooter_name]:    
+                        pivoted_data[shooter_name][match_name] = total #Add score for each match to the shooter
+                        pivoted_data[shooter_name]['total_score'] = round(pivoted_data[shooter_name]['total_score'] + total, 3) #Total score for the competition for each shooter
+                #Convert the dictionary to a list of dictionaries for easier sorting
+                results = []
+                for shooter_name, data in pivoted_data.items():
+                    row = {'shooter_name': shooter_name, **data}
+                    results.append(row)
+                #Sort the results by class in ascending order and by total score in descending order
+                #TODO: Enforce class order sorting by a prority list.
+                results.sort(key=lambda x: (x['class'], -x['total_score']))
+                #Group the results by class
+                grouped_results = {key: list(group) for key, group in groupby(results, key=itemgetter('class'))}
+                return grouped_results
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'get_comp_totals: {error}')
 
     def get_match_scores(self, match_id):
         """ Get the results for a match in a competition from the database """

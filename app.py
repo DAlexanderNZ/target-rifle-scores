@@ -62,6 +62,17 @@ def api_match_scores():
     scores = db.get_match_scores(match_id)
     return Response(json.dumps(scores, default=json_serial), mimetype='application/json')
 
+@app.route('/api/comptotals', methods=['POST'])
+def api_comp_totals():
+    """ 
+    Get all scores for a competition by competition name. 
+    Expected JSON format: {"competition": "competition_name"}. 
+    Data returned as a dictionary with shooter names as keys and class and total scores as values 
+    """
+    competition = request.get_json().get('competition')
+    results = db.get_comp_totals(competition)
+    return Response(json.dumps(results, default=json_serial), mimetype='application/json')
+
 #
 # Old flask template routes
 #
