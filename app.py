@@ -160,6 +160,7 @@ def bulk_scores_to_list(competition, match_id, date, scores):
     lines.pop(0)
     results = []
     for line in lines:
+        line.strip()
         if len(line) != 0:
             print(line)
             line = line.replace('\r', '')

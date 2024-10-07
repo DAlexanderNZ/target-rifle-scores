@@ -264,12 +264,23 @@ class database():
     
     def bulk_record_scores(self, scores):
         """
-        Record scores for shooters in a match
+        Record scores for shooters in a match. If the shooter does not exist in the database, they will be added.
         :param scores: a list of dictionaries of score attributes [shooter_last_name, shooter_first_name, class, shots, total, competition, match_id, date]
         """
         try:
             with self.conn.cursor() as cur:
-                query = """
+                #Insert the shooter if they do not exist in the database. This makes bulk_create_shooter() redundant.
+                query1 = """
+                INSERT INTO shooter (shooter_last_name, shooter_first_name) 
+                SELECT %s, %s
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM shooter 
+                    WHERE shooter_last_name = %s AND shooter_first_name = %s
+                );
+                """
+                #Insert the score for the shooter
+                query2 = """
                 INSERT INTO score (shooter_id, class, shots, total, competition, match_id, date)
                 SELECT shooter.shooter_id, %s, %s, %s, %s, %s, %s
                 FROM shooter
@@ -284,7 +295,8 @@ class database():
                     date = score[7]
                     shooter_last_name = score[0]
                     shooter_first_name = score[1]
-                    cur.execute(query, (shooter_class, shots, total, competition, match_id, date, shooter_last_name, shooter_first_name))
+                    cur.execute(query1, (shooter_last_name, shooter_first_name))
+                    cur.execute(query2, (shooter_class, shots, total, competition, match_id, date, shooter_last_name, shooter_first_name))
             self.conn.commit()
         except (Exception, psycopg.DatabaseError) as error:
             print(f'bulk_record_scores: {error}')
