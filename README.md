@@ -18,7 +18,7 @@
 4. Start the postgresql service: `systemctl start postgresql`
 5. Switch to the postgres user and run psql: `sudo -u postgres psql`
 6. Create a user: `CREATE USER user WITH PASSWORD 'password';`
-7. Create database: `CREATE DATABASE target_rifle_scores`
+7. Create database: `CREATE DATABASE target_rifle_scores;`
 8. Grant permissions to the new user: `GRANT ALL PRIVILEGES ON DATABASE target_rifle_scores TO user;`
 9. Grant permissions on the database schema: `\c target_rifle_scores` then `GRANT ALL ON SCHEMA public TO user;`
 
@@ -28,7 +28,7 @@
 3. Create a virtual environment on the repo directory: `python3 -m venv target-rifle-scores`
 4. Activate the virtual environment: `source target-rifle-scores/bin/activate`
 5. Install dependencies: `pip install -r requirements.txt`
-5. Edit `database.ini.example` and rename it to `database.ini. Change user and password to match your custom the values set in psql for the database
+5. Edit `database.ini.example` and rename it to `database.ini`. Change `user` and `password` to match your custom the values set in psql for the database
 6. Edit `target-rifle-scores.service.example` to change `username` occurences in `[Service]` to your account username
 7. Copy `configuration/target-rifle-scores.service.example` to systemd: `cp target-rifle-scores.service.example /etc/systemd/system/target-rifle-scores.service`
 8. Start the application: `sudo systemctl start target-rifle-scores`
