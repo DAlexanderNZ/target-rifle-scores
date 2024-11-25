@@ -162,7 +162,6 @@ def bulk_scores_to_list(competition, match_id, date, scores):
     for line in lines:
         line.strip()
         if len(line) != 0:
-            print(line)
             line = line.replace('\r', '')
             items = line.split(',')
             #Format shots to expected format
@@ -172,7 +171,6 @@ def bulk_scores_to_list(competition, match_id, date, scores):
                     items[3][i] = '5.001'
                 elif score == 'X':
                     items[3][i] = '6.001'
-            print(items)
             items.append(competition)
             items.append(match_id)
             items.append(date)
@@ -187,7 +185,7 @@ def bulk_add_score():
     match_id = request.form['match_id']
     date = request.form['match_date']
     data = request.form['csv_text']
-    print(f'Competition: {competition}, Match ID: {match_id}, Date: {date}, Data: {data}')
+    #print(f'Competition: {competition}, Match ID: {match_id}, Date: {date}, Data: {data}')
     bulk_scores = bulk_scores_to_list(competition, match_id, date, data)
     #Add scores
     db.bulk_record_scores(bulk_scores)

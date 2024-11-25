@@ -286,7 +286,7 @@ class database():
                 FROM shooter
                 WHERE shooter.shooter_last_name = %s AND shooter.shooter_first_name = %s;
                 """
-                for score in scores:
+                '''for score in scores:
                     shooter_class = score[2]
                     shots = score[3]
                     total = score[4]
@@ -295,8 +295,10 @@ class database():
                     date = score[7]
                     shooter_last_name = score[0]
                     shooter_first_name = score[1]
-                    cur.execute(query1, (shooter_last_name, shooter_first_name))
-                    cur.execute(query2, (shooter_class, shots, total, competition, match_id, date, shooter_last_name, shooter_first_name))
+                    cur.execute(query1, (shooter_last_name, shooter_first_name, shooter_last_name, shooter_first_name))
+                    cur.execute(query2, (shooter_class, shots, total, competition, match_id, date, shooter_last_name, shooter_first_name))'''
+                cur.executemany(query1, [(score[0], score[1], score[0], score[1]) for score in scores])
+                cur.executemany(query2, [(score[2], score[3], score[4], score[5], score[6], score[7], score[0], score[1]) for score in scores])
             self.conn.commit()
         except (Exception, psycopg.DatabaseError) as error:
             print(f'bulk_record_scores: {error}')
