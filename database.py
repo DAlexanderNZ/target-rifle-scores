@@ -649,3 +649,12 @@ class database():
             query = "INSERT INTO match_type (match_distance, match_counters, match_sighters) VALUES (%(match_distance)s, %(match_counters)s, %(match_sighters)s)"
             cur.executemany(query, match_types)
         self.conn.commit()
+
+        #Register a default user
+        config = self.load_config(self.config_file)
+        email = 'default@example.com'
+        password = config['password']
+        first_name = 'Default'
+        last_name = config['user']
+        new_user = {'email': email, 'password': password, 'first_name': first_name, 'last_name': last_name}
+        self.register_user(new_user)
