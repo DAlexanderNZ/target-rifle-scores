@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, Response, redirect, flash, send_from_directory
 from flask_httpauth import HTTPBasicAuth
+from flask_login import LoginManager, login_user, login_required, current_user
 from database import database
-from datetime import date
+from auth import User
+from datetime import date, datetime, timedelta
+import jwt
 import json
 import secrets
 
@@ -12,6 +15,7 @@ app.secret_key = SECRET_KEY
 auth = HTTPBasicAuth()
 db = database()
 
+#API routes
 @app.route('/')
 def index():
     #TODO: Create proper index page. Show highlighted results from recent matchs
@@ -317,6 +321,40 @@ def verify_password(email, password):
     if user != None:
         if db.verify_user(email, password) == True:
             return email
+
+#Login manager for user accounts
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    user_data = db.get_user_by_id(user_id)
+    if user_data:
+        return User(id=user_data['id'], email=user_data['email'], first_name=user_data['first_name'], last_name=user_data['last_name'])
+    return None
+
+#Api routes for user accounts
+@app.route('/api/auth/login', methods=['POST'])
+def api_login():
+    email = request.json['email']
+    password = request.json['password']
+    user = db.get_user_by_id(db.get_user_id(email))
+    if user and db.verify_user(email, password):
+        #Generate JWT token
+        token = jwt.encode({
+            'email': email,
+            'exp': datetime.now() + timedelta(hours=1) #One hour expiry
+        }, SECRET_KEY, algorithm='HS256')
+        #Login user
+        login_user(User(id=user['id'], email=user['email'], first_name=user['first_name'], last_name=user['last_name']))
+
+        return Response(json.dumps({'success': True, 'token': token}), status=200, mimetype='application/json')
+    return Response(json.dumps({'success': False, 'message': 'Authentication failed'}), status=401, mimetype='application/json')
+
+@app.route('/api/auth/logout', methods=['POST'])
+def api_logout():
+    #logout_user()
+    return Response(json.dumps({'success': True}), status=200, mimetype='application/json')
 
 if __name__ == '__main__':
     app.run(debug=True)

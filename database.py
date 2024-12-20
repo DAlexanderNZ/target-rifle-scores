@@ -397,10 +397,24 @@ class database():
             with self.conn.cursor() as cur:
                 query = "SELECT id FROM users WHERE email = %s"
                 cur.execute(query, (user_email,))
-                user_id = cur.fetchone()
-                return user_id
+                user_id = cur.fetchone() #user_id returned as a one element tuple
+                return user_id[0] 
         except (Exception, psycopg.DatabaseError) as error:
             print(f'get_user_id: {error}')
+            return None
+    
+    def get_user_by_id(self, user_id):
+        """ Get a user by ID from the database. Return None if user doesn't exist """
+        try:
+            with self.conn.cursor() as cur:
+                query = "SELECT id, email, first_name, last_name FROM users WHERE id = %s"
+                cur.execute(query, (user_id,))
+                user = cur.fetchone()
+                if user:
+                    return {'id': user[0], 'email': user[1], 'first_name': user[2], 'last_name': user[3]}
+                return None
+        except (Exception, psycopg.DatabaseError) as error:
+            print(f'get_user_by_id: {error}')
             return None
     
     def update_user_password(self, user_email, user_password):
