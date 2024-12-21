@@ -4,6 +4,16 @@ import psycopg
 from itertools import groupby
 from operator import itemgetter
 
+def handle_db_errors(func):
+    def wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except (Exception, psycopg.DatabaseError) as error:
+            self.conn.rollback() #Rollback the transaction to allow for next query to be executed on the connection
+            print(f'{func.__name__}: {error}')
+            return False
+    return wrapper
+
 class database():
     """ Postgresql database class using psycopg3 """
     def  __init__(self, config_file='database.ini'):
@@ -15,21 +25,18 @@ class database():
             self.default_info()
         self.classes = ['TR-A', 'TR-B', 'TR-C', 'TR-T', 'FTR-O', 'FTR-C', 'FPR-O', 'F-Open']
 
+    @handle_db_errors
     def do_tables_exist(self):
-        try:
-            with self.conn.cursor() as cur:
-                query = """
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'public' AND table_name = 'club');
-                    """
-                cur.execute(query)
-                result = cur.fetchone()
-                print(f'Do tables exist: {result[0]}')
-                return result[0]
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'do_tables_exist: {error}')
-            return False
+        with self.conn.cursor() as cur:
+            query = """
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name = 'club');
+                """
+            cur.execute(query)
+            result = cur.fetchone()
+            print(f'Do tables exist: {result[0]}')
+            return result[0]
 
     #Database config and loading
     @staticmethod
@@ -75,183 +82,167 @@ class database():
         """ Sort scores by total and count back the scores on shots where the total is equal """
         return sorted(scores, key=lambda x: (x[5], [y for y in reversed(x[3])]), reverse=True )
     
+    @handle_db_errors
     def get_all_scores(self):
         """ Get all scores from the database """
-        try:
-            with self.conn.cursor() as cur:
-                #Get the score values and related infomation in the format [shooter_name, class, competition, match_name, shots, shot_type, total, date]
-                #The array() function is used to convert rows with shot_type == null to a an empty array
-                cur.execute("""
-                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, score.competition, match.match_name, score.shots,
-                            array(
-                                SELECT COALESCE(elem, false)
-                                FROM unnest(score.shot_type) AS elem
-                            ) as shot_type, 
-                            score.total, score.date
-                FROM score
-                INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
-                INNER JOIN match ON  score.match_id = match.match_id;
-                """)
-                scores = cur.fetchall()
-                scores = self.replace_v_x(scores, 4)
-                return scores
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'get_all_scores: {error}')
-            return []  # Return an empty list in case of an error
+        with self.conn.cursor() as cur:
+            #Get the score values and related infomation in the format [shooter_name, class, competition, match_name, shots, shot_type, total, date]
+            #The array() function is used to convert rows with shot_type == null to a an empty array
+            cur.execute("""
+            SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, score.competition, match.match_name, score.shots,
+                        array(
+                            SELECT COALESCE(elem, false)
+                            FROM unnest(score.shot_type) AS elem
+                        ) as shot_type, 
+                        score.total, score.date
+            FROM score
+            INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
+            INNER JOIN match ON  score.match_id = match.match_id;
+            """)
+            scores = cur.fetchall()
+            scores = self.replace_v_x(scores, 4)
+            return scores
         
+    @handle_db_errors
     def get_comp_scores(self, competition):
         """ Get all scores for a competition from the database """
-        try:
-            with self.conn.cursor() as cur:
-                #Get the score values and related infomation in the format [shooter_name, class, match_name, shots, shot_type, total, date]
-                query = """
-                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, match.match_name, score.shots,
-                            array(
-                                SELECT COALESCE(elem, false)
-                                FROM unnest(score.shot_type) AS elem
-                            ) as shot_type,
-                            score.total, score.date
-                FROM score
-                INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
-                INNER JOIN match ON  score.match_id = match.match_id
-                LEFT JOIN class ON score.class = class.class
-                WHERE score.competition = %s
-                ORDER BY match.match_name, 
-                array_position(ARRAY[%s], score.class);
-                """
-                cur.execute(query, (competition, self.classes))
-                scores = cur.fetchall()
-                scores = self.replace_v_x(scores, 3)
-                return scores
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'get_comp_scores: {error}')
+        with self.conn.cursor() as cur:
+            #Get the score values and related infomation in the format [shooter_name, class, match_name, shots, shot_type, total, date]
+            query = """
+            SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, match.match_name, score.shots,
+                        array(
+                            SELECT COALESCE(elem, false)
+                            FROM unnest(score.shot_type) AS elem
+                        ) as shot_type,
+                        score.total, score.date
+            FROM score
+            INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
+            INNER JOIN match ON  score.match_id = match.match_id
+            LEFT JOIN class ON score.class = class.class
+            WHERE score.competition = %s
+            ORDER BY match.match_name, 
+            array_position(ARRAY[%s], score.class);
+            """
+            cur.execute(query, (competition, self.classes))
+            scores = cur.fetchall()
+            scores = self.replace_v_x(scores, 3)
+            return scores
 
+    @handle_db_errors
     def get_comp_totals(self, competition):
         """ Get the total scores for a competition from the database """
-        try:
-            with self.conn.cursor() as cur:
-                #Get the score total values and related infomation in the format [shooter_name, class, total, match_name]
-                query = """
-                SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, score.total, match.match_name
-                FROM score
-                INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
-                INNER JOIN match ON score.match_id = match.match_id
-                INNER JOIN competition_match cm ON match.match_id = cm.match_id
-                INNER JOIN competition comp on cm.competition =  comp.competition
-                WHERE comp.competition = %s;
-                """
-                cur.execute(query, (competition,))
-                scores = cur.fetchall()
-                #Sort data into a pvot table format for display
-                #TODO: Apply count back rules to scores
-                pivoted_data = {}
-                for shooter_name, class_name, total, match_name in scores:
-                    if shooter_name not in pivoted_data:
-                        pivoted_data[shooter_name] = {'class': class_name, 'total_score': 0}
-                    #Only Add the first score if duplicate scores are present. Should this duplication be logged and reported?
-                    if match_name not in pivoted_data[shooter_name]:    
-                        pivoted_data[shooter_name][match_name] = total #Add score for each match to the shooter
-                        pivoted_data[shooter_name]['total_score'] = round(pivoted_data[shooter_name]['total_score'] + total, 3) #Total score for the competition for each shooter
-                #Convert the dictionary to a list of dictionaries for easier sorting
-                results = []
-                for shooter_name, data in pivoted_data.items():
-                    row = {'shooter_name': shooter_name, **data}
-                    results.append(row)
-                #Sort the results by class in ascending order and by total score in descending order
-                #TODO: Enforce class order sorting by a prority list.
-                results.sort(key=lambda x: (x['class'], -x['total_score']))
-                #Group the results by class
-                grouped_results = {key: list(group) for key, group in groupby(results, key=itemgetter('class'))}
-                return grouped_results
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'get_comp_totals: {error}')
+        with self.conn.cursor() as cur:
+            #Get the score total values and related infomation in the format [shooter_name, class, total, match_name]
+            query = """
+            SELECT shooter.shooter_first_name || ' ' || shooter.shooter_last_name as shooter_name, score.class, score.total, match.match_name
+            FROM score
+            INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
+            INNER JOIN match ON score.match_id = match.match_id
+            INNER JOIN competition_match cm ON match.match_id = cm.match_id
+            INNER JOIN competition comp on cm.competition =  comp.competition
+            WHERE comp.competition = %s;
+            """
+            cur.execute(query, (competition,))
+            scores = cur.fetchall()
+            #Sort data into a pivot table format for display
+            #TODO: Apply count back rules to scores
+            pivoted_data = {}
+            for shooter_name, class_name, total, match_name in scores:
+                if shooter_name not in pivoted_data:
+                    pivoted_data[shooter_name] = {'class': class_name, 'total_score': 0}
+                #Only Add the first score if duplicate scores are present. Should this duplication be logged and reported?
+                if match_name not in pivoted_data[shooter_name]:    
+                    pivoted_data[shooter_name][match_name] = total #Add score for each match to the shooter
+                    pivoted_data[shooter_name]['total_score'] = round(pivoted_data[shooter_name]['total_score'] + total, 3) #Total score for the competition for each shooter
+            #Convert the dictionary to a list of dictionaries for easier sorting
+            results = []
+            for shooter_name, data in pivoted_data.items():
+                row = {'shooter_name': shooter_name, **data}
+                results.append(row)
+            #Sort the results by class in ascending order and by total score in descending order
+            #TODO: Enforce class order sorting by a priority list.
+            results.sort(key=lambda x: (x['class'], -x['total_score']))
+            #Group the results by class
+            grouped_results = {key: list(group) for key, group in groupby(results, key=itemgetter('class'))}
+            return grouped_results
 
+    @handle_db_errors
     def get_match_scores(self, match_id):
         """ Get the results for a match in a competition from the database """
-        try:
-            with self.conn.cursor() as cur:
-                #Get the score total values and related infomation in the format [last_name, first_name, class, shots, shot_type total]
-                query = """
-                SELECT shooter.shooter_last_name, shooter.shooter_first_name, score.class, score.shots, 
-                            array(
-                                SELECT COALESCE(elem, false)
-                                FROM unnest(score.shot_type) AS elem
-                            ) as shot_type, 
-                            score.total
-                FROM score
-                INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
-                WHERE score.match_id = %s
-                ORDER BY array_position(ARRAY[%s], score.class),
-                score.total DESC;
-                """
-                cur.execute(query, (match_id, self.classes))
-                scores = cur.fetchall()
-                scores = self.count_back_scores(scores)
-                scores = self.replace_v_x(scores, 3)
-                return scores
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'get_comp_results: {error}')
+        with self.conn.cursor() as cur:
+            #Get the score total values and related infomation in the format [last_name, first_name, class, shots, shot_type total]
+            query = """
+            SELECT shooter.shooter_last_name, shooter.shooter_first_name, score.class, score.shots, 
+                        array(
+                            SELECT COALESCE(elem, false)
+                            FROM unnest(score.shot_type) AS elem
+                        ) as shot_type, 
+                        score.total
+            FROM score
+            INNER JOIN shooter ON score.shooter_id = shooter.shooter_id
+            WHERE score.match_id = %s
+            ORDER BY array_position(ARRAY[%s], score.class),
+            score.total DESC;
+            """
+            cur.execute(query, (match_id, self.classes))
+            scores = cur.fetchall()
+            scores = self.count_back_scores(scores)
+            scores = self.replace_v_x(scores, 3)
+            return scores
 
+    @handle_db_errors
     def get_competitions(self, query='SELECT competition FROM competition'):
         """ Get the competitions from the database """
-        try:
-            with self.conn.cursor() as cur:
-                cur.execute(query)
-                competitions = cur.fetchall()
-                return(competitions)
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'get_competitions: {error}')
+        with self.conn.cursor() as cur:
+            cur.execute(query)
+            competitions = cur.fetchall()
+            return(competitions)
 
+    @handle_db_errors
     def get_matches(self, competition):
         """ Get the matches for a competition from the database """
         #Get the match values and related infomation in the format [match_id, match_name, match_distance, match_counters, match_sighters, description]
-        try:
-            with self.conn.cursor() as cur:
-                query = """
-                SELECT match.match_id, match.match_name, match.match_distance, match.match_counters, match_type.match_sighters, match.description
-                FROM competition_match
-                INNER JOIN match ON competition_match.match_id = match.match_id
-                INNER JOIN match_type ON (match.match_distance, match.match_counters) = (match_type.match_distance, match_type.match_counters)
-                WHERE competition_match.competition = %s
-                ORDER BY match.match_distance, match.match_counters
-                """
-                cur.execute(query, (competition,))
-                matches = cur.fetchall()
-                if not matches:
-                    print("No matches found. Check the competition parameter and database state.")
-                return matches
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f"get_matches error: {error}")
+        with self.conn.cursor() as cur:
+            query = """
+            SELECT match.match_id, match.match_name, match.match_distance, match.match_counters, match_type.match_sighters, match.description
+            FROM competition_match
+            INNER JOIN match ON competition_match.match_id = match.match_id
+            INNER JOIN match_type ON (match.match_distance, match.match_counters) = (match_type.match_distance, match_type.match_counters)
+            WHERE competition_match.competition = %s
+            ORDER BY match.match_distance, match.match_counters
+            """
+            cur.execute(query, (competition,))
+            matches = cur.fetchall()
+            if not matches:
+                print("No matches found. Check the competition parameter and database state.")
+            return matches
 
+    @handle_db_errors
     def get_classes(self):
         """ Get the classes from the database """
-        try:
-            with self.conn.cursor() as cur:
-                cur.execute("SELECT class, score_type, name FROM class")
-                classes = cur.fetchall()
-                return classes
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'get_classes: {error}')
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT class, score_type, name FROM class")
+            classes = cur.fetchall()
+            return classes
 
+    @handle_db_errors
     def get_name_suggestions(self, name):
         """ Get a list of name suggestions from the shooter table """
-        try:
-            with self.conn.cursor() as cur:
-                query = """
-                SELECT shooter_id, shooter_first_name, shooter_last_name 
-                FROM shooter
-                WHERE shooter_first_name ILIKE %s OR shooter_last_name ILIKE %s
-                """
-                #Add '%' wildcard characters around the name for partial matching  
-                name_pattern = '%' + name + '%'          
-                cur.execute(query, (name_pattern, name_pattern))
-                suggestions = cur.fetchall()
-                if not suggestions:
-                    suggestions = [(0, "No user by that name found",  "")]
-                return suggestions
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'get_name_suggestions: {error}')
+        with self.conn.cursor() as cur:
+            query = """
+            SELECT shooter_id, shooter_first_name, shooter_last_name 
+            FROM shooter
+            WHERE shooter_first_name ILIKE %s OR shooter_last_name ILIKE %s
+            """
+            #Add '%' wildcard characters around the name for partial matching  
+            name_pattern = '%' + name + '%'          
+            cur.execute(query, (name_pattern, name_pattern))
+            suggestions = cur.fetchall()
+            if not suggestions:
+                suggestions = [(0, "No user by that name found",  "")]
+            return suggestions
 
+    @handle_db_errors
     def record_score(self, score):
         """
         Record scores for shooters in a match
@@ -262,215 +253,175 @@ class database():
             cur.execute(query, score)
         self.conn.commit()
     
+    @handle_db_errors
     def bulk_record_scores(self, scores):
         """
         Record scores for shooters in a match. If the shooter does not exist in the database, they will be added.
         :param scores: a list of dictionaries of score attributes [shooter_last_name, shooter_first_name, class, shots, total, competition, match_id, date]
         """
-        try:
-            with self.conn.cursor() as cur:
-                #Insert the shooter if they do not exist in the database. This makes bulk_create_shooter() redundant.
-                query1 = """
-                INSERT INTO shooter (shooter_last_name, shooter_first_name) 
-                SELECT %s, %s
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM shooter 
-                    WHERE shooter_last_name = %s AND shooter_first_name = %s
-                );
-                """
-                #Insert the score for the shooter
-                query2 = """
-                INSERT INTO score (shooter_id, class, shots, total, competition, match_id, date)
-                SELECT shooter.shooter_id, %s, %s, %s, %s, %s, %s
-                FROM shooter
-                WHERE shooter.shooter_last_name = %s AND shooter.shooter_first_name = %s;
-                """
-                '''for score in scores:
-                    shooter_class = score[2]
-                    shots = score[3]
-                    total = score[4]
-                    competition = score[5]
-                    match_id = score[6]
-                    date = score[7]
-                    shooter_last_name = score[0]
-                    shooter_first_name = score[1]
-                    cur.execute(query1, (shooter_last_name, shooter_first_name, shooter_last_name, shooter_first_name))
-                    cur.execute(query2, (shooter_class, shots, total, competition, match_id, date, shooter_last_name, shooter_first_name))'''
-                cur.executemany(query1, [(score[0], score[1], score[0], score[1]) for score in scores])
-                cur.executemany(query2, [(score[2], score[3], score[4], score[5], score[6], score[7], score[0], score[1]) for score in scores])
-            self.conn.commit()
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'bulk_record_scores: {error}')
+        with self.conn.cursor() as cur:
+            #Insert the shooter if they do not exist in the database. This makes bulk_create_shooter() redundant.
+            query1 = """
+            INSERT INTO shooter (shooter_last_name, shooter_first_name) 
+            SELECT %s, %s
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM shooter 
+                WHERE shooter_last_name = %s AND shooter_first_name = %s
+            );
+            """
+            #Insert the score for the shooter
+            query2 = """
+            INSERT INTO score (shooter_id, class, shots, total, competition, match_id, date)
+            SELECT shooter.shooter_id, %s, %s, %s, %s, %s, %s
+            FROM shooter
+            WHERE shooter.shooter_last_name = %s AND shooter.shooter_first_name = %s;
+            """
+            cur.executemany(query1, [(score[0], score[1], score[0], score[1]) for score in scores])
+            cur.executemany(query2, [(score[2], score[3], score[4], score[5], score[6], score[7], score[0], score[1]) for score in scores])
+        self.conn.commit()
 
+    @handle_db_errors
     def record_new_competition(self, competition):
         """ Record a new competition in the database """
-        try:
-            with self.conn.cursor() as cur:
-                query = "INSERT INTO competition (competition, competition_description) VALUES (%s, %s);"
-                cur.execute(query, competition)
-            self.conn.commit()
-            return True
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'record_new_competition: {error}')
-            return error
+        with self.conn.cursor() as cur:
+            query = "INSERT INTO competition (competition, competition_description) VALUES (%s, %s);"
+            cur.execute(query, competition)
+        self.conn.commit()
+        return True
 
+    @handle_db_errors
     def record_new_match(self, match):
         """
         Record a new match in the database
         :param match: a dictionary of match attributes [match_name, match_distance + match_distance_type, match_counters, match_description, competition]
         """
-        try:
-            with self.conn.cursor() as cur:
-                query = """
-                INSERT INTO match (match_name, match_distance, match_counters, description)  VALUES (%s, %s, %s, %s) RETURNING match_id;
-                """
-                cur.execute(query, (match[0], match[1], match[2], match[3]))
-                match_id = cur.fetchone()[0]
-                query = "INSERT INTO competition_match (competition, match_id) VALUES (%s, %s);"
-                cur.execute(query, (match[4], match_id))
-            self.conn.commit()
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'record_new_match: {error}')
-            return False
+        with self.conn.cursor() as cur:
+            query = """
+            INSERT INTO match (match_name, match_distance, match_counters, description)  VALUES (%s, %s, %s, %s) RETURNING match_id;
+            """
+            cur.execute(query, (match[0], match[1], match[2], match[3]))
+            match_id = cur.fetchone()[0]
+            query = "INSERT INTO competition_match (competition, match_id) VALUES (%s, %s);"
+            cur.execute(query, (match[4], match_id))
+        self.conn.commit()
 
+    @handle_db_errors
     def remove_match(self, match_id):
         """
         Removes match from database if it has no scores
         :param match_id: the match_id of the match to be removed
         """
-        try:
-            with self.conn.cursor() as cur:
-                query = """
-                DELETE FROM match 
-                WHERE match_id NOT IN (
-                    SELECT DISTINCT match_id FROM score
-                ) AND match_id = %s;
-                """
-                cur.execute(query, (match_id,))
-                match_removed = cur.rowcount
-            self.conn.commit()
-            if match_removed == 0:
-                return False
-            return True
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'remove_match: {error}')
+        with self.conn.cursor() as cur:
+            query = """
+            DELETE FROM match 
+            WHERE match_id NOT IN (
+                SELECT DISTINCT match_id FROM score
+            ) AND match_id = %s;
+            """
+            cur.execute(query, (match_id,))
+            match_removed = cur.rowcount
+        self.conn.commit()
+        if match_removed == 0:
             return False
-
+        return True
+    
     #
     #   User auth and account related database functions
     #
 
+    @handle_db_errors
     def register_user(self, new_user):
         """ Register a new user in the database """
         password_hash = bcrypt.hashpw(new_user['password'].encode('utf-8'), bcrypt.gensalt())
-        try:
-            with self.conn.cursor() as cur:
-                query = "INSERT INTO users (email, password_hash, first_name, last_name) VALUES (%s, %s, %s, %s) RETURNING id;"
-                cur.execute(query, (new_user['email'], password_hash, new_user['first_name'], new_user['last_name']))
-                user_id = cur.fetchone()[0]
-                query = "INSERT INTO user_edit_log (user_id) VALUES (%s);"
-                cur.execute(query, (user_id,))
-            self.conn.commit()
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'register_user: {error}')
+        with self.conn.cursor() as cur:
+            query = "INSERT INTO users (email, password_hash, first_name, last_name) VALUES (%s, %s, %s, %s) RETURNING id;"
+            cur.execute(query, (new_user['email'], password_hash, new_user['first_name'], new_user['last_name']))
+            user_id = cur.fetchone()[0]
+            query = "INSERT INTO user_edit_log (user_id) VALUES (%s);"
+            cur.execute(query, (user_id,))
+        self.conn.commit()
+        return True
 
+    @handle_db_errors
     def verify_user(self, user_email, user_password):
         """ Verify a user's password """
-        try:
-            with self.conn.cursor() as cur:
-                query = "SELECT password_hash FROM users WHERE email = %s;"
-                cur.execute(query, (user_email,))
-                password_hash = cur.fetchone()[0]
-                if bcrypt.checkpw(user_password.encode('utf-8'), password_hash):
-                    return True
-                return False
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'verify_user: {error}')
+        with self.conn.cursor() as cur:
+            query = "SELECT password_hash FROM users WHERE email = %s;"
+            cur.execute(query, (user_email,))
+            password_hash = cur.fetchone()[0]
+            if bcrypt.checkpw(user_password.encode('utf-8'), password_hash):
+                return True
             return False
 
+    @handle_db_errors
     def get_user_id(self, user_email):
         """ Get a user from the database. Return None if user doesn't exist """
         if user_email == "" or user_email is None:
             return None
-        try:
-            with self.conn.cursor() as cur:
-                query = "SELECT id FROM users WHERE email = %s"
-                cur.execute(query, (user_email,))
-                user_id = cur.fetchone() #user_id returned as a one element tuple
-                return user_id[0] 
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'get_user_id: {error}')
-            return None
+        with self.conn.cursor() as cur:
+            query = "SELECT id FROM users WHERE email = %s"
+            cur.execute(query, (user_email,))
+            user_id = cur.fetchone() #user_id returned as a one element tuple
+            return user_id[0]
     
+    @handle_db_errors
     def get_user_by_id(self, user_id):
         """ Get a user by ID from the database. Return None if user doesn't exist """
-        try:
-            with self.conn.cursor() as cur:
-                query = "SELECT id, email, first_name, last_name FROM users WHERE id = %s"
-                cur.execute(query, (user_id,))
-                user = cur.fetchone()
-                if user:
-                    return {'id': user[0], 'email': user[1], 'first_name': user[2], 'last_name': user[3]}
-                return None
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'get_user_by_id: {error}')
+        with self.conn.cursor() as cur:
+            query = "SELECT id, email, first_name, last_name FROM users WHERE id = %s"
+            cur.execute(query, (user_id,))
+            user = cur.fetchone()
+            if user:
+                return {'id': user[0], 'email': user[1], 'first_name': user[2], 'last_name': user[3]}
             return None
     
+    @handle_db_errors
     def update_user_password(self, user_email, user_password):
         """ Update a user's password """
         password_hash = bcrypt.hashpw(user_password.encode('utf-8'), bcrypt.gensalt())
-        try:
-            with self.conn.cursor() as cur:
-                query = "UPDATE users SET password_hash = %s WHERE email = %s;"
-                cur.execute(query, (password_hash, user_email))
-            self.conn.commit()
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'update_user_password: {error}')
+        with self.conn.cursor() as cur:
+            query = "UPDATE users SET password_hash = %s WHERE email = %s;"
+            cur.execute(query, (password_hash, user_email))
+        self.conn.commit()
 
+    @handle_db_errors
     def is_authenticated(self, user_id):
         """ Check if a user is authenticated """
-        try:
-            with self.conn.cursor() as cur:
-                query = "SELECT "
-                cur.execute(query)
-                authenticated = cur.fetchone()
-                if authenticated:
-                    return True
-                return False
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'is_authenticated: {error}')
+        with self.conn.cursor() as cur:
+            query = "SELECT "
+            cur.execute(query)
+            authenticated = cur.fetchone()
+            if authenticated:
+                return True
             return False
         
     #
     #   Shooter and club related functions
     #
 
+    @handle_db_errors
     def create_shooter(self, shooter):
         """ 
         Create a new shooter 
         :param shooter: a dictionary of shooter attributes [shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob]
         """
-        try:
-            with self.conn.cursor() as cur:
-                query = "INSERT INTO shooter (shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob"")VALUES (%s, %s, %s, %s);"
-                cur.execute(query, shooter)
-            self.conn.commit()
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'create_shooter: {error}')
+        with self.conn.cursor() as cur:
+            query = "INSERT INTO shooter (shooter_nra_id, shooter_first_name, shooter_last_name, shooter_dob) VALUES (%s, %s, %s, %s);"
+            cur.execute(query, shooter)
+        self.conn.commit()
 
+    @handle_db_errors
     def bulk_create_shooters(self, shooters):
         """ 
         Create multiple shooters 
         :param shooters: a list of dictionaries of shooter attributes [shooter_last_name, shooter_first_name]
         """
-        try:
-            with self.conn.cursor() as cur:
-                query = "INSERT INTO shooter (shooter_last_name, shooter_first_name) VALUES (%s, %s);"
-                cur.executemany(query, shooters)
-            self.conn.commit()
-        except (Exception, psycopg.DatabaseError) as error:
-            print(f'bulk_create_shooters: {error}')
+        with self.conn.cursor() as cur:
+            query = "INSERT INTO shooter (shooter_last_name, shooter_first_name) VALUES (%s, %s);"
+            cur.executemany(query, shooters)
+        self.conn.commit()
+
 
     #
     #   First time database setup functions
