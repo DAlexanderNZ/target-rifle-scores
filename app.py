@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, Response, redirect, flash, send_from_directory
 from flask_httpauth import HTTPBasicAuth
-from flask_login import LoginManager, login_user, login_required, current_user
+from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from database import database
 from auth import User
 from datetime import date, datetime, timedelta
@@ -9,7 +9,7 @@ import json
 import secrets
 
 app = Flask(__name__)
-#New App Secret key on start. Needs to be a stored key for production
+#New App Secret key on start. Needs to be a stored key for production, regenerated on restart for development requires login again
 SECRET_KEY = secrets.token_hex(16)
 app.secret_key = SECRET_KEY
 auth = HTTPBasicAuth()
@@ -25,11 +25,8 @@ def index():
 
 @app.route('/<path:path>')
 def static_proxy(path):
+    """ Send static files from the static folder for client web app """
     return send_from_directory(app.static_folder, path)
-
-@app.route('/api/message', methods=['GET'])
-def get_message():
-    return Response(json.dumps({'message': 'Hello from Flask!'}), mimetype='application/json')
 
 @app.route('/api/allscores', methods=['GET'])
 def api_all_scores():
@@ -296,32 +293,6 @@ def add_shooter_sub():
 
     return redirect(request.referrer)
 
-#Routes for user accounts
-@app.route('/register', methods=['GET'])
-def register():
-    return render_template('register.html')
-
-@app.route('/register', methods=['POST'])
-def register_sub():
-    email = request.form['email']
-    password = request.form['password']
-    first_name = request.form['first_name']
-    last_name = request.form['last_name']
-    #TODO: Check existing user before creating user
-    new_user = {'email': email, 'password': password, 'first_name': first_name, 'last_name': last_name}
-    db.register_user(new_user)
-    flash(f'New user with email {email} has been registered')
-    return redirect(request.referrer)
-
-#Checks user email and password against users table for http basic auth
-@auth.verify_password
-def verify_password(email, password):
-    print(f'Verifying user {email}')
-    user = db.get_user_id(email)
-    if user != None:
-        if db.verify_user(email, password) == True:
-            return email
-
 #Login manager for user accounts
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -336,6 +307,7 @@ def load_user(user_id):
 #Api routes for user accounts
 @app.route('/api/auth/login', methods=['POST'])
 def api_login():
+    """ Login user and return JWT token """
     email = request.json['email']
     password = request.json['password']
     user = db.get_user_by_id(db.get_user_id(email))
@@ -346,15 +318,38 @@ def api_login():
             'exp': datetime.now() + timedelta(hours=1) #One hour expiry
         }, SECRET_KEY, algorithm='HS256')
         #Login user
-        login_user(User(id=user['id'], email=user['email'], first_name=user['first_name'], last_name=user['last_name']))
-
-        return Response(json.dumps({'success': True, 'token': token}), status=200, mimetype='application/json')
+        if login_user(User(id=user['id'], email=user['email'], first_name=user['first_name'], last_name=user['last_name'])):
+            return Response(json.dumps({'success': True, 'token': token}), status=200, mimetype='application/json')
+        else:
+            return Response(json.dumps({'success': False, 'message': 'User inactive'}), status=401, mimetype='application/json')
     return Response(json.dumps({'success': False, 'message': 'Authentication failed'}), status=401, mimetype='application/json')
 
 @app.route('/api/auth/logout', methods=['POST'])
 def api_logout():
-    #logout_user()
+    """ Logout user """
+    logout_user()
     return Response(json.dumps({'success': True}), status=200, mimetype='application/json')
+
+@app.route('/api/auth/user', methods=['GET'])
+@login_required
+def api_get_user():
+    """ Return user details on client refresh with valid token """
+    user = current_user
+    return Response(json.dumps({'email': user.email, 'first_name': user.first_name, 'last_name': user.last_name}), status=200, mimetype='application/json')
+
+@app.route('/api/register', methods=['POST'])
+@login_required
+def api_register():
+    """ Register new user. Requires authenticated user """
+    email = request.json['email']
+    password = request.json['password']
+    first_name = request.json['first_name']
+    last_name = request.json['last_name']
+    new_user = {'email': email, 'password': password, 'first_name': first_name, 'last_name': last_name}
+    #Email is a unique db constraint, register_user will return False if email already exists
+    if db.register_user(new_user):
+        return Response(json.dumps({'success': True}), status=201, mimetype='application/json')
+    return Response(json.dumps({'success': False, 'message': 'User with email already exists or other error'}), status=409, mimetype='application/json')
 
 if __name__ == '__main__':
     app.run(debug=True)

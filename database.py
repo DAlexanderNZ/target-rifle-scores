@@ -5,6 +5,7 @@ from itertools import groupby
 from operator import itemgetter
 
 def handle_db_errors(func):
+    """ Decorator to handle database errors, log and rollback the transaction """
     def wrapper(self, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
